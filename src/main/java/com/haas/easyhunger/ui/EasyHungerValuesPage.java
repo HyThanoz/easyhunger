@@ -439,7 +439,8 @@ public class EasyHungerValuesPage extends InteractiveCustomUIPage<EasyHungerValu
             {"ThirstDecayRate", "Thirst Decay Rate", String.valueOf(config.getThirstDecayRate()), "Amount of thirst lost per tick."},
             {"SprintThirstMultiplier", "Sprint Thirst Multiplier", String.valueOf(config.getSprintThirstMultiplier()), "Multiplier applied to thirst decay when sprinting."},
             {"ThirstDamage", "Thirst Damage", String.valueOf(config.getThirstDamage()), "Damage taken when thirst reaches zero."},
-            {"ThirstyThreshold", "Thirsty Threshold", String.valueOf(config.getThirstyThreshold()), "Thirst level where warnings start appearing."}
+            {"ThirstyThreshold", "Thirsty Threshold", String.valueOf(config.getThirstyThreshold()), "Thirst level where warnings start appearing."},
+            {"StarvationStaminaModifier", "Stamina Modifier", String.valueOf(config.getStarvationStaminaModifier()), "How much stamina depletion affects hunger decay."}
         };
         
         for (int i = 0; i < configs.length; i++) {
@@ -574,6 +575,9 @@ public class EasyHungerValuesPage extends InteractiveCustomUIPage<EasyHungerValu
                     break;
                 case "ThirstyThreshold":
                     config.setThirstyThreshold(Float.parseFloat(valueStr));
+                    break;
+                case "StarvationStaminaModifier":
+                    config.setStarvationStaminaModifier(Float.parseFloat(valueStr));
                     break;
                 case "WellFedThreshold":
                     config.setWellFedThreshold(Float.parseFloat(valueStr));

@@ -8,10 +8,10 @@
         "Material": "Empty",
         "DrawType": "Model",
         "CustomModel": "Items/EasyHunger_Odre_Empty.blockymodel",
-        "CustomModelScale": 0.5,
+        "CustomModelScale": 0.2,
         "CustomModelTexture": [
             {
-                "Texture": "Items/EasyHunger_Odre.png",
+                "Texture": "Items/EasyHunger_Odre_Empty.png",
                 "Weight": 1
             }
         ]
@@ -96,10 +96,10 @@
                 "Material": "Empty",
                 "DrawType": "Model",
                 "CustomModel": "Items/EasyHunger_Odre_Full.blockymodel",
-                "CustomModelScale": 0.5,
+                "CustomModelScale": 0.2,
                 "CustomModelTexture": [
                     {
-                        "Texture": "Items/EasyHunger_Odre.png",
+                        "Texture": "Items/EasyHunger_Odre_Full.png",
                         "Weight": 1
                     }
                 ]
