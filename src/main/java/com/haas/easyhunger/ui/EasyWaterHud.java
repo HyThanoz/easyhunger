@@ -20,6 +20,7 @@ public class EasyWaterHud extends CustomUIHud {
     private GameMode gameMode;
     private float thirstLevel;
     private float previewThirstRestoration = 0.0f;
+    private boolean visible = true;
 
     public EasyWaterHud(@NonNullDecl PlayerRef playerRef, GameMode gameMode, float thirstLevel) {
         super(playerRef);
@@ -36,6 +37,12 @@ public class EasyWaterHud extends CustomUIHud {
         updateHudPosition(uiCommandBuilder, hudPosition);
         updateGameMode(uiCommandBuilder, this.gameMode);
         updateThirstLevel(uiCommandBuilder, this.thirstLevel);
+        updateVisibility(uiCommandBuilder, this.visible);
+    }
+
+    protected void updateVisibility(UICommandBuilder uiCommandBuilder, boolean visible) {
+        this.visible = visible;
+        uiCommandBuilder.set("#EasyWaterContainer.Visible", this.visible);
     }
 
     protected void updateHudPosition(UICommandBuilder uiCommandBuilder, HudPosition hudPosition) {
@@ -133,6 +140,14 @@ public class EasyWaterHud extends CustomUIHud {
         if (hud == null) return;
         UICommandBuilder uiCommandBuilder = new UICommandBuilder();
         hud.updateGameMode(uiCommandBuilder, gameMode);
+        hud.update(false, uiCommandBuilder);
+    }
+
+    static public void updatePlayerHudVisibility(@NonNullDecl PlayerRef playerRef, boolean visible) {
+        EasyWaterHud hud = hudMap.get(playerRef);
+        if (hud == null) return;
+        UICommandBuilder uiCommandBuilder = new UICommandBuilder();
+        hud.updateVisibility(uiCommandBuilder, visible);
         hud.update(false, uiCommandBuilder);
     }
 }

@@ -1,8 +1,8 @@
 {
     "Parent": "EasyHunger_Template_Waterskin",
     "TranslationProperties": {
-        "Name": "Empty Waterskin",
-        "Description": "A leather waterskin that can be filled with water"
+        "Name": "server.items.EasyHunger_Odre_Empty.name",
+        "Description": "server.items.EasyHunger_Odre_Empty.description"
     },
     "BlockType": {
         "Material": "Empty",
@@ -89,8 +89,8 @@
         "Filled_Water": {
             "Variant": true,
             "TranslationProperties": {
-                "Name": "Waterskin",
-                "Description": "A waterskin filled with fresh water. Drink to restore thirst."
+                "Name": "server.items.EasyHunger_Odre_Filled.name",
+                "Description": "server.items.EasyHunger_Odre_Filled.description"
             },
             "BlockType": {
                 "Material": "Empty",

@@ -1,8 +1,8 @@
 {
     "Parent": "Potion_Empty",
     "TranslationProperties": {
-        "Name": "Empty Flask",
-        "Description": "An empty flask that can be filled with water"
+        "Name": "server.items.EasyHunger_Flask_Empty.name",
+        "Description": "server.items.EasyHunger_Flask_Empty.description"
     },
     "HeldScale": 0.35,
     "MaxStack": 16,
@@ -35,8 +35,8 @@
         "Filled_Water": {
             "Variant": true,
             "TranslationProperties": {
-                "Name": "Water Flask",
-                "Description": "A flask filled with fresh water. Drink to restore hunger."
+                "Name": "server.items.EasyHunger_Flask_Filled.name",
+                "Description": "server.items.EasyHunger_Flask_Filled.description"
             },
             "Icon": "Icons/ItemsGenerated/Potion_Mana.png",
             "Consumable": true,

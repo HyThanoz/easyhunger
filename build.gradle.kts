@@ -3,7 +3,7 @@
 }
 
 group = "Haas"
-version = "1.1.8"
+version = "1.1.9"
 
 repositories {
     mavenCentral()
@@ -45,6 +45,7 @@ val generateManifest by tasks.registering {
               "Group": "${project.group}",
               "Name": "${rootProject.name}",
               "Version": "${project.version}",
+              "ServerVersion": "2026.02.17-255364b8e",
               "Main": "com.haas.easyhunger.EasyHunger",
               "IncludesAssetPack": true
             }

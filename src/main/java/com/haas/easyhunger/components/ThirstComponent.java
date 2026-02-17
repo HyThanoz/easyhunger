@@ -20,6 +20,7 @@ public class ThirstComponent implements Component<EntityStore> {
     private float thirstLevel;
     private float elapsedTime = 0.0f;
     private float lastSentThirst = -1.0f;
+    private float idleTime = 0.0f;
 
     public ThirstComponent() {
         this.thirstLevel = EasyHunger.get().getConfig().getMaxThirst(); // Init with Max
@@ -32,6 +33,7 @@ public class ThirstComponent implements Component<EntityStore> {
     public ThirstComponent (ThirstComponent other) {
         this.thirstLevel = other.thirstLevel;
         this.elapsedTime = other.elapsedTime;
+        this.idleTime = other.idleTime;
     }
 
     public float getElapsedTime () {
@@ -43,6 +45,10 @@ public class ThirstComponent implements Component<EntityStore> {
     public void resetElapsedTime () {
         this.elapsedTime = 0.0f;
     }
+
+    public float getIdleTime() { return idleTime; }
+    public void addIdleTime(float dt) { idleTime += dt; }
+    public void resetIdleTime() { idleTime = 0.0f; }
 
     public float getLastSentThirst() { return lastSentThirst; }
     public void setLastSentThirst(float v) { this.lastSentThirst = v; }

@@ -103,6 +103,21 @@ public class EasyThirstSystem extends EntityTickingSystem<EntityStore> {
             && com.haas.easyhunger.utils.SleepUtils.isSleeping(index, archetypeChunk)) {
             return;
         }
+
+        // Check if player is idle (pause thirst while idle)
+        if (EasyHunger.get().getConfig().isIdlePauseEnabled()) {
+            if (movementComp != null) {
+                MovementStates states = movementComp.getMovementStates();
+                if (states != null && states.idle) {
+                    thirst.addIdleTime(EasyHunger.get().getConfig().getStarvationTickRate());
+                    if (thirst.getIdleTime() >= EasyHunger.get().getConfig().getIdlePauseSeconds()) {
+                        return; // Paused
+                    }
+                } else {
+                    thirst.resetIdleTime();
+                }
+            }
+        }
         
         // Apply biome multiplier to thirst decay
         float biomeMultiplier = 1.0f;

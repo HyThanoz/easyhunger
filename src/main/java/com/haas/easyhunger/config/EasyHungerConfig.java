@@ -38,6 +38,10 @@ public class EasyHungerConfig {
     private static final KeyedCodec<Boolean> WELL_FED_ENABLED = new KeyedCodec<>("WellFedEnabled", Codec.BOOLEAN);
     private static final KeyedCodec<Float> WELL_FED_THRESHOLD = new KeyedCodec<>("WellFedThreshold", Codec.FLOAT);
 
+    // Idle Pause Configuration
+    private static final KeyedCodec<Boolean> IDLE_PAUSE_ENABLED = new KeyedCodec<>("IdlePauseEnabled", Codec.BOOLEAN);
+    private static final KeyedCodec<Float> IDLE_PAUSE_SECONDS = new KeyedCodec<>("IdlePauseSeconds", Codec.FLOAT);
+
 
     public static final BuilderCodec<EasyHungerConfig> CODEC = BuilderCodec.builder(EasyHungerConfig.class, EasyHungerConfig::new)
             // === HUNGER / FOOD CONFIGS ===
@@ -68,6 +72,10 @@ public class EasyHungerConfig {
             // === WELL FED BONUS ===
             .addField(WELL_FED_ENABLED, (c, v) -> c.wellFedEnabled = v, EasyHungerConfig::isWellFedEnabled)
             .addField(WELL_FED_THRESHOLD, (c, v) -> c.wellFedThreshold = v, EasyHungerConfig::getWellFedThreshold)
+            
+            // === IDLE PAUSE ===
+            .addField(IDLE_PAUSE_ENABLED, (c, v) -> c.idlePauseEnabled = v, EasyHungerConfig::isIdlePauseEnabled)
+            .addField(IDLE_PAUSE_SECONDS, (c, v) -> c.idlePauseSeconds = v, EasyHungerConfig::getIdlePauseSeconds)
             .build();
 
     private Integer maxHunger = 50;
@@ -95,6 +103,10 @@ public class EasyHungerConfig {
     // Well Fed settings
     private boolean wellFedEnabled = true;
     private float wellFedThreshold = 35.0f; // Absolute value (like HungryThreshold)
+
+    // Idle Pause settings
+    private boolean idlePauseEnabled = true;
+    private float idlePauseSeconds = 60.0f;
 
 
     public EasyHungerConfig() {
@@ -138,6 +150,10 @@ public class EasyHungerConfig {
     public boolean isWellFedEnabled() { return wellFedEnabled; }
     public float getWellFedThreshold() { return wellFedThreshold; }
 
+    // Idle Pause getters
+    public boolean isIdlePauseEnabled() { return idlePauseEnabled; }
+    public float getIdlePauseSeconds() { return idlePauseSeconds; }
+
     // ===================== SETTERS =====================
     
     // Hunger setters
@@ -163,6 +179,10 @@ public class EasyHungerConfig {
     public void setPauseWhileSleeping(boolean value) { this.pauseWhileSleeping = value; }
     public void setWellFedEnabled(boolean value) { this.wellFedEnabled = value; }
     public void setWellFedThreshold(float value) { this.wellFedThreshold = value; }
+
+    // Idle Pause setters
+    public void setIdlePauseEnabled(boolean value) { this.idlePauseEnabled = value; }
+    public void setIdlePauseSeconds(float value) { this.idlePauseSeconds = value; }
 
 }
 

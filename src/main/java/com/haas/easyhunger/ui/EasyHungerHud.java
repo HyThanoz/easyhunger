@@ -22,6 +22,7 @@ public class EasyHungerHud extends CustomUIHud {
     private GameMode gameMode;
     private float hungerLevel;
     private float previewHungerRestoration = 0.0f;
+    private boolean visible = true;
 
     public EasyHungerHud(@NonNullDecl PlayerRef playerRef, GameMode gameMode, float hungerLevel) {
         super(playerRef);
@@ -38,6 +39,12 @@ public class EasyHungerHud extends CustomUIHud {
         updateHudPosition(uiCommandBuilder, hudPosition);
         updateGameMode(uiCommandBuilder, this.gameMode);
         updateHungerLevel(uiCommandBuilder, this.hungerLevel);
+        updateVisibility(uiCommandBuilder, this.visible);
+    }
+
+    protected void updateVisibility(UICommandBuilder uiCommandBuilder, boolean visible) {
+        this.visible = visible;
+        uiCommandBuilder.set("#EasyHungerContainer.Visible", this.visible);
     }
 
     protected void updateHudPosition(UICommandBuilder uiCommandBuilder, HudPosition hudPosition) {
@@ -133,6 +140,14 @@ public class EasyHungerHud extends CustomUIHud {
         if (hud == null) return;
         UICommandBuilder uiCommandBuilder = new UICommandBuilder();
         hud.updateGameMode(uiCommandBuilder, gameMode);
+        hud.update(false, uiCommandBuilder);
+    }
+
+    static public void updatePlayerHudVisibility(@NonNullDecl PlayerRef playerRef, boolean visible) {
+        EasyHungerHud hud = hudMap.get(playerRef);
+        if (hud == null) return;
+        UICommandBuilder uiCommandBuilder = new UICommandBuilder();
+        hud.updateVisibility(uiCommandBuilder, visible);
         hud.update(false, uiCommandBuilder);
     }
 }

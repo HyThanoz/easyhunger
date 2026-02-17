@@ -14,6 +14,8 @@ import com.hypixel.hytale.server.core.modules.entitystats.EntityStatValue;
 import com.hypixel.hytale.server.core.modules.entitystats.asset.DefaultEntityStatTypes;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
+import com.hypixel.hytale.server.core.entity.movement.MovementStatesComponent;
+import com.hypixel.hytale.protocol.MovementStates;
 import com.haas.easyhunger.config.EasyHungerConfig;
 import com.haas.easyhunger.EasyHungerUtils;
 import com.haas.easyhunger.EasyHunger;
@@ -51,6 +53,7 @@ public class StarveSystem extends EntityTickingSystem<EntityStore> {
             HungerComponent.getComponentType(),
             EntityStatMap.getComponentType(),
             Player.getComponentType(),
+            PlayerRef.getComponentType(),
             PlayerRef.getComponentType(),
             Query.not(DeathComponent.getComponentType()),
             Query.not(Invulnerable.getComponentType())
@@ -92,6 +95,22 @@ public class StarveSystem extends EntityTickingSystem<EntityStore> {
         if (EasyHunger.get().getConfig().isPauseWhileSleeping() 
             && com.haas.easyhunger.utils.SleepUtils.isSleeping(index, archetypeChunk)) {
             return;
+        }
+
+        // Check if player is idle (pause hunger while idle)
+        if (EasyHunger.get().getConfig().isIdlePauseEnabled()) {
+            MovementStatesComponent movementComp = archetypeChunk.getComponent(index, MovementStatesComponent.getComponentType());
+            if (movementComp != null) {
+                MovementStates states = movementComp.getMovementStates();
+                if (states != null && states.idle) {
+                    hunger.addIdleTime(EasyHunger.get().getConfig().getStarvationTickRate());
+                    if (hunger.getIdleTime() >= EasyHunger.get().getConfig().getIdlePauseSeconds()) {
+                        return; // Paused
+                    }
+                } else {
+                    hunger.resetIdleTime();
+                }
+            }
         }
         
         float staminaModifier = ((10.0f - lowestStaminaSeen) / 10.0f) * EasyHunger.get().getConfig().getStarvationStaminaModifier();

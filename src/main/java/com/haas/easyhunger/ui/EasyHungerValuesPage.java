@@ -440,7 +440,11 @@ public class EasyHungerValuesPage extends InteractiveCustomUIPage<EasyHungerValu
             {"SprintThirstMultiplier", "Sprint Thirst Multiplier", String.valueOf(config.getSprintThirstMultiplier()), "Multiplier applied to thirst decay when sprinting."},
             {"ThirstDamage", "Thirst Damage", String.valueOf(config.getThirstDamage()), "Damage taken when thirst reaches zero."},
             {"ThirstyThreshold", "Thirsty Threshold", String.valueOf(config.getThirstyThreshold()), "Thirst level where warnings start appearing."},
-            {"StarvationStaminaModifier", "Stamina Modifier", String.valueOf(config.getStarvationStaminaModifier()), "How much stamina depletion affects hunger decay."}
+            {"StarvationStaminaModifier", "Stamina Modifier", String.valueOf(config.getStarvationStaminaModifier()), "How much stamina depletion affects hunger decay."},
+            
+            // Idle Pause configs
+            {"IdlePauseEnabled", "Idle Pause Enabled", String.valueOf(config.isIdlePauseEnabled()), "Pause hunger/thirst when standing still."},
+            {"IdlePauseSeconds", "Idle Pause Time (s)", String.valueOf(config.getIdlePauseSeconds()), "Time in seconds to wait before pausing decay."}
         };
         
         for (int i = 0; i < configs.length; i++) {
@@ -581,6 +585,14 @@ public class EasyHungerValuesPage extends InteractiveCustomUIPage<EasyHungerValu
                     break;
                 case "WellFedThreshold":
                     config.setWellFedThreshold(Float.parseFloat(valueStr));
+                    break;
+                    
+                // Idle Pause
+                case "IdlePauseEnabled":
+                    config.setIdlePauseEnabled(Boolean.parseBoolean(valueStr));
+                    break;
+                case "IdlePauseSeconds":
+                    config.setIdlePauseSeconds(Float.parseFloat(valueStr));
                     break;
                     
                 default:

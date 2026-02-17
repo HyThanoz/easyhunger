@@ -20,7 +20,11 @@ public class EasyHungerValuesCommand extends AbstractPlayerCommand {
     public static final String requiredPermission = "easyhunger.config";
 
     public EasyHungerValuesCommand() {
-        super("ehconfig", "Opens the EasyHunger configuration UI", false);
+        this("ehconfig");
+    }
+
+    public EasyHungerValuesCommand(String commandName) {
+        super(commandName, "Opens the EasyHunger configuration UI", false);
         this.requirePermission(requiredPermission);
     }
 

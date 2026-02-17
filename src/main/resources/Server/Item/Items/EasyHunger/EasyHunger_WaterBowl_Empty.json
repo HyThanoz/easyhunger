@@ -1,8 +1,8 @@
 {
     "Parent": "Potion_Empty",
     "TranslationProperties": {
-        "Name": "Empty Water Bowl",
-        "Description": "A simple bowl that can be filled with water"
+        "Name": "server.items.EasyHunger_WaterBowl_Empty.name",
+        "Description": "server.items.EasyHunger_WaterBowl_Empty.description"
     },
     "BlockType": {
         "Material": "Empty",
@@ -90,8 +90,8 @@
         "Filled_Water": {
             "Variant": true,
             "TranslationProperties": {
-                "Name": "Water Bowl",
-                "Description": "A bowl filled with water. Drink to restore thirst."
+                "Name": "server.items.EasyHunger_WaterBowl_Filled.name",
+                "Description": "server.items.EasyHunger_WaterBowl_Filled.description"
             },
             "BlockType": {
                 "Material": "Empty",

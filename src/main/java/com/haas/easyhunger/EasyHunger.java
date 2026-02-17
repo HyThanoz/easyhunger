@@ -23,6 +23,11 @@ import com.haas.easyhunger.systems.WellFedSystem;
 import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
 
 import java.util.logging.Level;
+import java.util.Set;
+import com.hypixel.hytale.server.core.permissions.PermissionsModule;
+import com.haas.easyhunger.commands.EasyHungerCommand;
+import com.haas.easyhunger.commands.EasyHungerHideCommand;
+import com.haas.easyhunger.commands.EasyHungerShowCommand;
 
 public class EasyHunger extends JavaPlugin {
     private static EasyHunger instance;
@@ -110,11 +115,36 @@ public class EasyHunger extends JavaPlugin {
         // register admin commands
         this.getCommandRegistry().registerCommand(new SetHungerCommand());
         this.getCommandRegistry().registerCommand(new com.haas.easyhunger.commands.SetThirstCommand());
+        
+        // Register the main command (which handles subcommands like hide, show, config)
+        this.getCommandRegistry().registerCommand(new com.haas.easyhunger.commands.EasyHungerCommand());
+        
+        // Register the global config command (/ehconfig) for compatibility
         this.getCommandRegistry().registerCommand(new com.haas.easyhunger.commands.EasyHungerValuesCommand());
 
 
         // Try to prune recipes immediately, but also plan for a delayed pruning if needed
         this.pruneRecipes();
+    }
+
+    @Override
+    protected void start() {
+        super.start();
+        
+        // Grant permissions to adventure and creative players for basic commands
+        final Set<String> playerPermissions = Set.of(
+            EasyHungerCommand.requiredPermission,
+            EasyHungerHideCommand.requiredPermission,
+            EasyHungerShowCommand.requiredPermission
+        );
+        
+        try {
+            PermissionsModule.get().addGroupPermission("Adventure", playerPermissions);
+            PermissionsModule.get().addGroupPermission("Creative", playerPermissions);
+            logInfo("Added EasyHunger permissions to Adventure and Creative groups.");
+        } catch (Exception e) {
+            logInfo("Failed to add permissions: " + e.getMessage());
+        }
     }
 
     public void pruneRecipes() {
