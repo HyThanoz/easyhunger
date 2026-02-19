@@ -121,7 +121,10 @@ public class EasyWaterHud extends CustomUIHud {
 
     static public void updatePlayerThirstLevel(@NonNullDecl PlayerRef playerRef, float thirstLevel) {
         EasyWaterHud hud = hudMap.get(playerRef);
-        if (hud == null) return;
+        if (hud == null) {
+            EasyCombinedHud.updatePlayerThirstLevel(playerRef, thirstLevel);
+            return;
+        }
         UICommandBuilder uiCommandBuilder = new UICommandBuilder();
         hud.updateThirstLevel(uiCommandBuilder, thirstLevel);
         hud.update(false, uiCommandBuilder);
@@ -129,7 +132,10 @@ public class EasyWaterHud extends CustomUIHud {
     
     static public void updatePlayerThirstPreview(@NonNullDecl PlayerRef playerRef, float thirstRestoration) {
         EasyWaterHud hud = hudMap.get(playerRef);
-        if (hud == null) return;
+        if (hud == null) {
+            EasyCombinedHud.updatePlayerThirstPreview(playerRef, thirstRestoration);
+            return;
+        }
         UICommandBuilder uiCommandBuilder = new UICommandBuilder();
         hud.updateThirstPreview(uiCommandBuilder, thirstRestoration);
         hud.update(false, uiCommandBuilder);
@@ -137,7 +143,10 @@ public class EasyWaterHud extends CustomUIHud {
     
     static public void updatePlayerGameMode(@NonNullDecl PlayerRef playerRef, GameMode gameMode) {
         EasyWaterHud hud = hudMap.get(playerRef);
-        if (hud == null) return;
+        if (hud == null) {
+            // Combined HUD handles both game modes
+            return;
+        }
         UICommandBuilder uiCommandBuilder = new UICommandBuilder();
         hud.updateGameMode(uiCommandBuilder, gameMode);
         hud.update(false, uiCommandBuilder);
@@ -145,7 +154,10 @@ public class EasyWaterHud extends CustomUIHud {
 
     static public void updatePlayerHudVisibility(@NonNullDecl PlayerRef playerRef, boolean visible) {
         EasyWaterHud hud = hudMap.get(playerRef);
-        if (hud == null) return;
+        if (hud == null) {
+            // Combined HUD handles visibility for both
+            return;
+        }
         UICommandBuilder uiCommandBuilder = new UICommandBuilder();
         hud.updateVisibility(uiCommandBuilder, visible);
         hud.update(false, uiCommandBuilder);

@@ -122,6 +122,9 @@ public class EasyHunger extends JavaPlugin {
         // Register the global config command (/ehconfig) for compatibility
         this.getCommandRegistry().registerCommand(new com.haas.easyhunger.commands.EasyHungerValuesCommand());
 
+        // Register version info command (/ehversion)
+        this.getCommandRegistry().registerCommand(new com.haas.easyhunger.commands.EhVersionCommand());
+
 
         // Try to prune recipes immediately, but also plan for a delayed pruning if needed
         this.pruneRecipes();

@@ -28,16 +28,28 @@ public class EasyHungerPlayerReady {
             HungerComponent hungerComponent = store.ensureAndGetComponent(ref, HungerComponent.getComponentType());
             float hungerLevel = hungerComponent.getHungerLevel();
 
-            EasyHungerHud hud = new EasyHungerHud(playerRef, player.getGameMode(), hungerLevel);
-            HudManager.get().setCustomHud(player, playerRef, EasyHungerHud.hudIdentifier, hud);
-
-            // Initialize Thirst (only if enabled)
-            if (com.haas.easyhunger.EasyHunger.get().getConfig().isThirstEnabled()) {
+            boolean thirstEnabled = com.haas.easyhunger.EasyHunger.get().getConfig().isThirstEnabled();
+            float thirstLevel = 0.0f;
+            if (thirstEnabled) {
                 com.haas.easyhunger.components.ThirstComponent thirstComponent = store.ensureAndGetComponent(ref, com.haas.easyhunger.components.ThirstComponent.getComponentType());
-                float thirstLevel = thirstComponent.getThirstLevel();
-                
-                com.haas.easyhunger.ui.EasyWaterHud waterHud = new com.haas.easyhunger.ui.EasyWaterHud(playerRef, player.getGameMode(), thirstLevel);
-                HudManager.get().setCustomHud(player, playerRef, com.haas.easyhunger.ui.EasyWaterHud.hudIdentifier, waterHud);
+                thirstLevel = thirstComponent.getThirstLevel();
+            }
+
+            if (HudManager.get().isMultipleHudAvailable()) {
+                // MultipleHUD: Register separate HUDs
+                EasyHungerHud hud = new EasyHungerHud(playerRef, player.getGameMode(), hungerLevel);
+                HudManager.get().setCustomHud(player, playerRef, EasyHungerHud.hudIdentifier, hud);
+
+                if (thirstEnabled) {
+                    com.haas.easyhunger.ui.EasyWaterHud waterHud = new com.haas.easyhunger.ui.EasyWaterHud(playerRef, player.getGameMode(), thirstLevel);
+                    HudManager.get().setCustomHud(player, playerRef, com.haas.easyhunger.ui.EasyWaterHud.hudIdentifier, waterHud);
+                }
+            } else {
+                // Vanilla / AutoMultiHud: Single combined HUD with both bars
+                com.haas.easyhunger.ui.EasyCombinedHud combinedHud = new com.haas.easyhunger.ui.EasyCombinedHud(
+                    playerRef, player.getGameMode(), hungerLevel, thirstLevel, thirstEnabled
+                );
+                player.getHudManager().setCustomHud(playerRef, combinedHud);
             }
         });
     }

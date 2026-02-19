@@ -11,16 +11,24 @@ import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
 
 public class HudManager implements HudProvider {
     private final HudProvider hudProvider;
+    private final boolean multipleHudAvailable;
     private static final HudManager instance = new HudManager();
 
     public HudManager() {
         PluginBase multiplehud = PluginManager.get().getPlugin(PluginIdentifier.fromString("Buuz135:MultipleHUD"));
         if (multiplehud == null || !multiplehud.isEnabled()) {
             hudProvider = new DefaultHudProvider();
-            EasyHunger.logInfo("MultipleHUD plugin not found or not enabled. Mod won't be compatible with other HUD mods.");
+            multipleHudAvailable = false;
+            EasyHunger.logInfo("MultipleHUD not found. Using combined vanilla HUD (compatible with AutoMultiHud).");
         } else {
             hudProvider = new MultipleHudProvider();
+            multipleHudAvailable = true;
+            EasyHunger.logInfo("MultipleHUD detected. Using separate HUDs.");
         }
+    }
+
+    public boolean isMultipleHudAvailable() {
+        return multipleHudAvailable;
     }
 
     public void setCustomHud(

@@ -121,7 +121,11 @@ public class EasyHungerHud extends CustomUIHud {
 
     static public void updatePlayerHungerLevel(@NonNullDecl PlayerRef playerRef, float hungerLevel) {
         EasyHungerHud hud = hudMap.get(playerRef);
-        if (hud == null) return;
+        if (hud == null) {
+            // Vanilla/AutoMultiHud: redirect to combined HUD
+            EasyCombinedHud.updatePlayerHungerLevel(playerRef, hungerLevel);
+            return;
+        }
         UICommandBuilder uiCommandBuilder = new UICommandBuilder();
         hud.updateHungerLevel(uiCommandBuilder, hungerLevel);
         hud.update(false, uiCommandBuilder);
@@ -129,7 +133,10 @@ public class EasyHungerHud extends CustomUIHud {
     
     static public void updatePlayerHungerPreview(@NonNullDecl PlayerRef playerRef, float hungerRestoration) {
         EasyHungerHud hud = hudMap.get(playerRef);
-        if (hud == null) return;
+        if (hud == null) {
+            EasyCombinedHud.updatePlayerHungerPreview(playerRef, hungerRestoration);
+            return;
+        }
         UICommandBuilder uiCommandBuilder = new UICommandBuilder();
         hud.updateHungerPreview(uiCommandBuilder, hungerRestoration);
         hud.update(false, uiCommandBuilder);
@@ -137,7 +144,10 @@ public class EasyHungerHud extends CustomUIHud {
     
     static public void updatePlayerGameMode(@NonNullDecl PlayerRef playerRef, GameMode gameMode) {
         EasyHungerHud hud = hudMap.get(playerRef);
-        if (hud == null) return;
+        if (hud == null) {
+            EasyCombinedHud.updatePlayerGameMode(playerRef, gameMode);
+            return;
+        }
         UICommandBuilder uiCommandBuilder = new UICommandBuilder();
         hud.updateGameMode(uiCommandBuilder, gameMode);
         hud.update(false, uiCommandBuilder);
@@ -145,7 +155,10 @@ public class EasyHungerHud extends CustomUIHud {
 
     static public void updatePlayerHudVisibility(@NonNullDecl PlayerRef playerRef, boolean visible) {
         EasyHungerHud hud = hudMap.get(playerRef);
-        if (hud == null) return;
+        if (hud == null) {
+            EasyCombinedHud.updatePlayerHudVisibility(playerRef, visible);
+            return;
+        }
         UICommandBuilder uiCommandBuilder = new UICommandBuilder();
         hud.updateVisibility(uiCommandBuilder, visible);
         hud.update(false, uiCommandBuilder);
