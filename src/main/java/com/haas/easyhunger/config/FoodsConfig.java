@@ -7,6 +7,7 @@ import com.hypixel.hytale.codec.builder.BuilderCodec;
 import com.hypixel.hytale.codec.codecs.map.MapCodec;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -15,7 +16,7 @@ import java.util.Map;
  */
 public class FoodsConfig {
     
-    private static final KeyedCodec<Map<String, Float>> FOOD_VALUES = new KeyedCodec<>("FoodValues", new MapCodec<>(Codec.FLOAT, HashMap::new));
+    private static final KeyedCodec<Map<String, Float>> FOOD_VALUES = new KeyedCodec<>("FoodValues", new MapCodec<>(Codec.FLOAT, LinkedHashMap::new));
     
     public static final BuilderCodec<FoodsConfig> CODEC = BuilderCodec.builder(FoodsConfig.class, FoodsConfig::new)
             .addField(FOOD_VALUES, (c, v) -> c.foodValues = v, FoodsConfig::getFoodValues)
@@ -24,7 +25,7 @@ public class FoodsConfig {
     private Map<String, Float> foodValues;
     
     public FoodsConfig() {
-        foodValues = new HashMap<>();
+        foodValues = new LinkedHashMap<>();
         initializeDefaults();
     }
     
@@ -280,19 +281,13 @@ public class FoodsConfig {
         foodValues.put("Food_Pasta_Mushroom", 25.0f);
         foodValues.put("Food_Omelette", 25.0f);
         foodValues.put("Food_Oat_Porridge_Berry", 25.0f);
-        foodValues.put("Food_Jam_Azure", 26.0f);
-        foodValues.put("Food_Jam_PinkBerry", 26.0f);
-        foodValues.put("Food_Jam_PoisonTree", 26.0f);
-        foodValues.put("Food_Jam_SpiralTree", 26.0f);
-        foodValues.put("Food_Jam_WindWillow", 26.0f);
+
         
         // Uncommon (20-24)
         foodValues.put("Food_Sauce_Dog", 24.0f);
         foodValues.put("Food_Pasta", 23.0f);
         foodValues.put("Food_Oat_Porridge", 22.0f);
-        foodValues.put("Food_Jam_Mango", 22.0f);
-        foodValues.put("Food_Jam_Berry", 21.0f);
-        foodValues.put("Food_Jam_Apple", 21.0f);
+
         foodValues.put("Food_Bibimbap", 24.0f);
         foodValues.put("Food_Cheese_Burger", 23.0f);
         foodValues.put("Food_Cheese_Cake", 24.0f);
@@ -325,6 +320,95 @@ public class FoodsConfig {
         foodValues.put("AndiemgCheff_YakimeshiChicken", 23.0f);
         foodValues.put("AndiemgCheff_YakimeshiFish", 23.0f);
         foodValues.put("AndiemgCheff_YakimeshiPork", 22.0f);
+        
+        // ZC Gaia - Foods by Rarity
+        // Epic (32-37)
+
+        
+        // Rare (25-30)
+        foodValues.put("ZC_Sushi", 30.0f);
+        foodValues.put("ZC_FriedEggplant", 28.0f);
+        foodValues.put("ZC_ChiliCaliflower", 27.0f);
+
+        
+        // Uncommon (15-20)
+        foodValues.put("ZC_AuGrat", 20.0f);
+        foodValues.put("ZC_BreakfastScramble", 20.0f);
+        foodValues.put("ZC_FishChips", 20.0f);
+        foodValues.put("ZC_FishEggplantSoup", 19.0f);
+        foodValues.put("ZC_EggplantStirfry", 19.0f);
+        foodValues.put("ZC_Sketti", 19.0f);
+        foodValues.put("ZC_VeggieStew", 19.0f);
+        foodValues.put("ZC_CarrotCake", 18.0f);
+        foodValues.put("ZC_CheesyEggplant", 18.0f);
+        foodValues.put("ZC_FishTaco", 18.0f);
+        foodValues.put("ZC_SquashSuasageSoup", 18.0f);
+        foodValues.put("ZC_PotatoSoup", 17.0f);
+        foodValues.put("ZC_StuffedTurnip", 17.0f);
+        foodValues.put("ZC_Tomato_Soup", 17.0f);
+        foodValues.put("ZC_AzureMuffin", 16.0f);
+        foodValues.put("ZC_BerryMuffin", 16.0f);
+        foodValues.put("ZC_CauliTaco", 16.0f);
+        foodValues.put("ZC_FriedEggs", 15.0f);
+        foodValues.put("ZC_Sausage", 15.0f);
+
+        // EndgameAndQoL - Foods
+        foodValues.put("Food_Meat_Coooked_Alpha_Trex", 48.0f);
+        foodValues.put("Food_Meat_Raw_Alpha_Trex", 12.5f);
+
+        // Spice Of Life - Foods & Ingredients
+        foodValues.put("SOL_Food_RibsBBQ", 42.0f);
+        foodValues.put("SOL_Food_Bangers", 27.0f);
+        foodValues.put("SOL_Food_Wellington_Beef", 44.0f);
+        foodValues.put("SOL_Biscuits", 18.0f);
+        foodValues.put("SOL_Food_Chips", 20.0f);
+        foodValues.put("SOL_Food_CakeAzure", 40.0f);
+        foodValues.put("SOL_Food_CakeBasic", 32.0f);
+        foodValues.put("SOL_Food_CakeBerry", 33.0f);
+        foodValues.put("SOL_Food_CakeCarrot", 34.0f);
+        foodValues.put("SOL_Food_CakeChoc", 41.0f);
+        foodValues.put("SOL_Food_CakeFrosted", 42.0f);
+        foodValues.put("SOL_Food_Caramel", 20.0f);
+        foodValues.put("SOL_Food_ChocolateDark", 22.0f);
+        foodValues.put("SOL_Food_ChocolateMilk", 21.0f);
+        foodValues.put("SOL_Food_ChocolateRuby", 23.0f);
+        foodValues.put("SOL_Food_ChocolateWhite", 21.0f);
+        foodValues.put("SOL_Plant_Fruit_CocoaBeans", 2.75f);
+        foodValues.put("SOL_Ingredient_CocoaPowder", 3.0f);
+        foodValues.put("SOL_Food_CookedEggs", 20.0f);
+        foodValues.put("SOL_Cookies_Milk", 19.0f);
+        foodValues.put("SOL_Cookies_Trip", 21.0f);
+        foodValues.put("SOL_Cookies_BerryWhite", 20.0f);
+        foodValues.put("SOL_Food_CornOnCob", 7.25f);
+        foodValues.put("SOL_Ingredient_Cream", 20.0f);
+        foodValues.put("SOL_Food_CrispSalad", 6.75f);
+        foodValues.put("SOL_Food_SmokedSalmon", 29.0f);
+        foodValues.put("SOL_Food_FishChips", 34.0f);
+        foodValues.put("SOL_Food_ChickenFried", 28.0f);
+        foodValues.put("SOL_Food_GrilledAubergine", 21.0f);
+        foodValues.put("SOL_Food_SnackCreamCheese", 5.0f);
+        foodValues.put("SOL_Ingredient_Honey", 20.0f);
+        foodValues.put("SOL_Food_RoastHam", 40.0f);
+        foodValues.put("SOL_Food_IceCreamAzure", 18.0f);
+        foodValues.put("SOL_Food_IceCreamBerry", 19.0f);
+        foodValues.put("SOL_Food_IceCreamChoc", 20.0f);
+        foodValues.put("SOL_Food_IceCreamMint", 18.0f);
+        foodValues.put("SOL_Food_IceCreamVanilla", 17.0f);
+        foodValues.put("SOL_Food_Jello", 16.0f);
+        foodValues.put("SOL_Food_Lasagna", 34.0f);
+        foodValues.put("SOL_Food_Risotto_Mushroom", 27.0f);
+        foodValues.put("SOL_Food_Pancakes", 22.0f);
+        foodValues.put("SOL_Food_Pasta_Spicy", 34.0f);
+        foodValues.put("SOL_Food_Pasta_Carb", 34.0f);
+        foodValues.put("SOL_Food_Pasta_Meatball", 35.0f);
+        foodValues.put("SOL_Food_Pasta_Tomato", 25.0f);
+        foodValues.put("SOL_Food_LinksRaw", 3.5f);
+        foodValues.put("SOL_Food_PastaRaw", 5.0f);
+        foodValues.put("SOL_Food_RoastChicken", 41.0f);
+        foodValues.put("SOL_Food_Wellington_Salmon", 42.0f);
+        foodValues.put("SOL_Food_SteakChips", 28.0f);
+        foodValues.put("SOL_Food_Waffles", 23.0f);
+        foodValues.put("SOL_Food_CheesecakeBlueberry", 26.0f);
     }
     
     public Map<String, Float> getFoodValues() { return foodValues; }
@@ -339,7 +423,7 @@ public class FoodsConfig {
             foodValues.put(foodId, value);
         } catch (UnsupportedOperationException e) {
             // Map is unmodifiable, create a mutable copy
-            foodValues = new HashMap<>(foodValues);
+            foodValues = new LinkedHashMap<>(foodValues);
             foodValues.put(foodId, value);
         }
     }
@@ -354,7 +438,7 @@ public class FoodsConfig {
         Map<String, Float> defaults = defaultConfig.getFoodValues();
         
         // Create mutable copy if current map is unmodifiable
-        Map<String, Float> mutableValues = new HashMap<>(foodValues);
+        Map<String, Float> mutableValues = new LinkedHashMap<>(foodValues);
         
         boolean changed = false;
         for (Map.Entry<String, Float> entry : defaults.entrySet()) {

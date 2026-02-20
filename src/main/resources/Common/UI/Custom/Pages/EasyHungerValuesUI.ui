@@ -183,6 +183,58 @@ $C.@PageOverlay {
           );
         }
 
+        TextButton #CatZcGaia {
+          Text: "ZC GAIA";
+          Anchor: (Width: 60, Height: 24, Vertical: 0, Right: 4);
+          Background: (Color: #1e2d3d);
+          OutlineColor: #3a4a5a;
+          OutlineSize: 1;
+          Style: TextButtonStyle(
+            Default: (LabelStyle: (FontSize: 9, TextColor: #8899aa, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+            Hovered: (LabelStyle: (FontSize: 9, TextColor: #aabbcc, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+            Disabled: (Background: (Color: #2a4a6a), LabelStyle: (FontSize: 9, TextColor: #88ccff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
+          );
+        }
+
+        TextButton #CatHatsuya {
+          Text: "HATSUYA";
+          Anchor: (Width: 65, Height: 24, Vertical: 0, Right: 4);
+          Background: (Color: #1e2d3d);
+          OutlineColor: #3a4a5a;
+          OutlineSize: 1;
+          Style: TextButtonStyle(
+            Default: (LabelStyle: (FontSize: 9, TextColor: #8899aa, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+            Hovered: (LabelStyle: (FontSize: 9, TextColor: #aabbcc, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+            Disabled: (Background: (Color: #2a4a6a), LabelStyle: (FontSize: 9, TextColor: #88ccff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
+          );
+        }
+
+        TextButton #CatEndgame {
+          Text: "ENDGAME";
+          Anchor: (Width: 65, Height: 24, Vertical: 0, Right: 4);
+          Background: (Color: #1e2d3d);
+          OutlineColor: #3a4a5a;
+          OutlineSize: 1;
+          Style: TextButtonStyle(
+            Default: (LabelStyle: (FontSize: 9, TextColor: #8899aa, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+            Hovered: (LabelStyle: (FontSize: 9, TextColor: #aabbcc, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+            Disabled: (Background: (Color: #2a4a6a), LabelStyle: (FontSize: 9, TextColor: #88ccff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
+          );
+        }
+
+        TextButton #CatSpice {
+          Text: "SOL";
+          Anchor: (Width: 45, Height: 24, Vertical: 0, Right: 4);
+          Background: (Color: #1e2d3d);
+          OutlineColor: #3a4a5a;
+          OutlineSize: 1;
+          Style: TextButtonStyle(
+            Default: (LabelStyle: (FontSize: 9, TextColor: #8899aa, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+            Hovered: (LabelStyle: (FontSize: 9, TextColor: #aabbcc, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+            Disabled: (Background: (Color: #2a4a6a), LabelStyle: (FontSize: 9, TextColor: #88ccff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
+          );
+        }
+
         TextButton #CatOther {
           Text: "OTHER";
           Anchor: (Width: 55, Height: 24, Vertical: 0);

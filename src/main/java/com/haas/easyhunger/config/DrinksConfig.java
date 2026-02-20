@@ -7,6 +7,7 @@ import com.hypixel.hytale.codec.builder.BuilderCodec;
 import com.hypixel.hytale.codec.codecs.map.MapCodec;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -15,7 +16,7 @@ import java.util.Map;
  */
 public class DrinksConfig {
     
-    private static final KeyedCodec<Map<String, Float>> DRINK_VALUES = new KeyedCodec<>("DrinkValues", new MapCodec<>(Codec.FLOAT, HashMap::new));
+    private static final KeyedCodec<Map<String, Float>> DRINK_VALUES = new KeyedCodec<>("DrinkValues", new MapCodec<>(Codec.FLOAT, LinkedHashMap::new));
     
     public static final BuilderCodec<DrinksConfig> CODEC = BuilderCodec.builder(DrinksConfig.class, DrinksConfig::new)
             .addField(DRINK_VALUES, (c, v) -> c.drinkValues = v, DrinksConfig::getDrinkValues)
@@ -24,7 +25,7 @@ public class DrinksConfig {
     private Map<String, Float> drinkValues;
     
     public DrinksConfig() {
-        drinkValues = new HashMap<>();
+        drinkValues = new LinkedHashMap<>();
         initializeDefaults();
     }
     
@@ -118,6 +119,37 @@ public class DrinksConfig {
         drinkValues.put("Pink_Berry_Wine", 32.0f);
         drinkValues.put("Wild_Berry_Wine", 30.0f);
         drinkValues.put("Wine_Mango", 40.0f);
+        
+        // ZC Gaia - Juices & Drinks
+        // Rare (25-30)
+        drinkValues.put("ZC_AppleJuice", 17.0f);
+        drinkValues.put("ZC_AzureJuice", 17.0f);
+        drinkValues.put("ZC_BeetJuice", 17.0f);
+        // Uncommon (20-24)
+        drinkValues.put("ZC_BerryJuice", 17.0f);
+        drinkValues.put("ZC_CocoMilk", 17.0f);
+        
+        // Jams (Moved from FoodsConfig)
+        drinkValues.put("ZC_MangoHabJam", 17.0f);
+        drinkValues.put("ZC_AzureJam", 17.0f);
+        drinkValues.put("ZC_BerryJam", 17.0f);
+        
+        // Other Mods Jams
+        drinkValues.put("Food_Jam_Azure", 17.0f);
+        drinkValues.put("Food_Jam_PinkBerry", 17.0f);
+        drinkValues.put("Food_Jam_PoisonTree", 17.0f);
+        drinkValues.put("Food_Jam_SpiralTree", 17.0f);
+        drinkValues.put("Food_Jam_WindWillow", 17.0f);
+        drinkValues.put("Food_Jam_Mango", 17.0f);
+        drinkValues.put("Food_Jam_Berry", 17.0f);
+        drinkValues.put("Food_Jam_Apple", 17.0f);
+        
+        // Hatsuya Exploration Beers
+        drinkValues.put("Hat_Beer_Glow", 18.0f);
+        drinkValues.put("Hat_Beer_Health", 20.0f);
+        drinkValues.put("Hat_Beer_Recall", 19.0f);
+        drinkValues.put("Hat_Beer_Return", 19.0f);
+        drinkValues.put("Hat_Beer_Surface", 17.0f);
     }
     
     public Map<String, Float> getDrinkValues() { return drinkValues; }
@@ -144,7 +176,7 @@ public class DrinksConfig {
             drinkValues.put(drinkId, value);
         } catch (UnsupportedOperationException e) {
             // Map is unmodifiable, create a mutable copy
-            drinkValues = new HashMap<>(drinkValues);
+            drinkValues = new LinkedHashMap<>(drinkValues);
             drinkValues.put(drinkId, value);
         }
     }
@@ -159,7 +191,7 @@ public class DrinksConfig {
         Map<String, Float> defaults = defaultConfig.getDrinkValues();
         
         // Create mutable copy if current map is unmodifiable
-        Map<String, Float> mutableValues = new HashMap<>(drinkValues);
+        Map<String, Float> mutableValues = new LinkedHashMap<>(drinkValues);
         
         boolean changed = false;
         for (Map.Entry<String, Float> entry : defaults.entrySet()) {

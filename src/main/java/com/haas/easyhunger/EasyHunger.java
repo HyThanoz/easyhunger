@@ -78,6 +78,7 @@ public class EasyHunger extends JavaPlugin {
         entityStoreRegistry.registerSystem(new OnDeathSystem());
         entityStoreRegistry.registerSystem(new com.haas.easyhunger.systems.EasyHungerBlockBreakSystem());
         entityStoreRegistry.registerSystem(new com.haas.easyhunger.systems.EasyHungerJumpSystem());
+        entityStoreRegistry.registerSystem(new com.haas.easyhunger.systems.EasyHungerBlockPlaceSystem());
 
         // DISABLED: Old Food Handler (replaced by ConsumeFoodInteraction)
         // final com.haas.easyhunger.systems.EasyHungerFoodHandler foodHandler = new com.haas.easyhunger.systems.EasyHungerFoodHandler(this.hungerComponentType);

@@ -59,6 +59,17 @@ public class EasyThirstHandler {
             
             if (transactionInfo.contains("query=null")) return;
 
+            // Check if player just placed a block (to avoid restoring thirst on block placement)
+            // Using the new system that tracks placement of configured drink items
+            PlayerRef playerRef = getPlayerRef(player);
+            if (playerRef != null) {
+                Long lastPlace = com.haas.easyhunger.systems.EasyHungerBlockPlaceSystem.LAST_PLACE_TIME.get(playerRef.getUuid());
+                // Small window (100ms) is enough because inventory change happens immediately after placement in the same tick or next
+                if (lastPlace != null && System.currentTimeMillis() - lastPlace < 100) {
+                    return;
+                }
+            }
+
             // Check Last Item Consumption
             if (matchesLastItemConsumption(transaction)) {
                 String itemId = extractItemIdFromTransaction(transaction);
@@ -91,6 +102,7 @@ public class EasyThirstHandler {
                     
                     // Get player's thirst component and restore thirst (same pattern as FoodHandler)
                     try {
+                        // Re-use logic to get accessor for thirst component
                         var store = player.getReference().getStore();
                         
                         ComponentAccessor accessor = null;
@@ -112,15 +124,8 @@ public class EasyThirstHandler {
                                 
                                 // Update HUD
                                 try {
-                                    if (accessor != null) {
-                                        PlayerRef playerRef = (PlayerRef) accessor.getComponent(
-                                            (Ref) player.getReference(), 
-                                            (ComponentType) (Object) PlayerRef.getComponentType()
-                                        );
-                                        
-                                        if (playerRef != null) {
-                                            EasyWaterHud.updatePlayerThirstLevel(playerRef, thirst.getThirstLevel());
-                                        }
+                                    if (playerRef != null) { // Use cached playerRef
+                                        EasyWaterHud.updatePlayerThirstLevel(playerRef, thirst.getThirstLevel());
                                     }
                                 } catch (Exception e) {
                                     // HUD update failed, ignore
@@ -205,5 +210,23 @@ public class EasyThirstHandler {
             }
         }
         return false;
+    }
+
+    private PlayerRef getPlayerRef(Player player) {
+        try {
+            var store = player.getReference().getStore();
+            ComponentAccessor accessor = null;
+            if (store instanceof ComponentAccessor) {
+                accessor = (ComponentAccessor) store;
+            } else {
+                accessor = (ComponentAccessor) (Object) store;
+            }
+            return (PlayerRef) accessor.getComponent(
+                (Ref) player.getReference(), 
+                (ComponentType) (Object) PlayerRef.getComponentType()
+            );
+        } catch (Exception e) {
+            return null;
+        }
     }
 }

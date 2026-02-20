@@ -111,6 +111,10 @@ public class EasyHungerValuesPage extends InteractiveCustomUIPage<EasyHungerValu
         cmd.set("#CatGalore.Visible", hasCategoryItems("galore", allItems));
         cmd.set("#CatConnor.Visible", hasCategoryItems("connor", allItems));
         cmd.set("#CatCaba.Visible", hasCategoryItems("caba", allItems));
+        cmd.set("#CatZcGaia.Visible", hasCategoryItems("zcgaia", allItems));
+        cmd.set("#CatHatsuya.Visible", hasCategoryItems("hatsuya", allItems));
+        cmd.set("#CatEndgame.Visible", hasCategoryItems("endgame", allItems));
+        cmd.set("#CatSpice.Visible", hasCategoryItems("spice", allItems));
         cmd.set("#CatAle.Visible", hasCategoryItems("ale", allItems));
         cmd.set("#CatCheff.Visible", hasCategoryItems("cheff", allItems));
         cmd.set("#CatOther.Visible", hasCategoryItems("other", allItems));
@@ -198,6 +202,10 @@ public class EasyHungerValuesPage extends InteractiveCustomUIPage<EasyHungerValu
         evt.addEventBinding(CustomUIEventBindingType.Activating, "#CatGalore", EventData.of("Action", "cat:galore"), false);
         evt.addEventBinding(CustomUIEventBindingType.Activating, "#CatConnor", EventData.of("Action", "cat:connor"), false);
         evt.addEventBinding(CustomUIEventBindingType.Activating, "#CatCaba", EventData.of("Action", "cat:caba"), false);
+        evt.addEventBinding(CustomUIEventBindingType.Activating, "#CatZcGaia", EventData.of("Action", "cat:zcgaia"), false);
+        evt.addEventBinding(CustomUIEventBindingType.Activating, "#CatHatsuya", EventData.of("Action", "cat:hatsuya"), false);
+        evt.addEventBinding(CustomUIEventBindingType.Activating, "#CatEndgame", EventData.of("Action", "cat:endgame"), false);
+        evt.addEventBinding(CustomUIEventBindingType.Activating, "#CatSpice", EventData.of("Action", "cat:spice"), false);
         evt.addEventBinding(CustomUIEventBindingType.Activating, "#CatAle", EventData.of("Action", "cat:ale"), false);
         evt.addEventBinding(CustomUIEventBindingType.Activating, "#CatCheff", EventData.of("Action", "cat:cheff"), false);
         evt.addEventBinding(CustomUIEventBindingType.Activating, "#CatOther", EventData.of("Action", "cat:other"), false);

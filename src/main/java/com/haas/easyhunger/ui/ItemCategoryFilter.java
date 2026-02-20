@@ -19,6 +19,10 @@ public class ItemCategoryFilter {
     public static final String GALORE = "galore";
     public static final String CONNOR = "connor";
     public static final String CABA = "caba";
+    public static final String ZCGAIA = "zcgaia";
+    public static final String HATSUYA = "hatsuya";
+    public static final String ENDGAME = "endgame";
+    public static final String SPICE = "spice";
     public static final String OTHER = "other";
     
     // HiddensHarvestDelights - exact item IDs from mod files
@@ -211,6 +215,118 @@ public class ItemCategoryFilter {
         CABA_ITEMS.add("Wine_Mango");
     }
     
+    // ZC Gaia - Foods, Jams, Juices & Drinks
+    private static final Set<String> ZCGAIA_ITEMS = new HashSet<>();
+    static {
+        // Foods
+        ZCGAIA_ITEMS.add("ZC_AuGrat");
+        ZCGAIA_ITEMS.add("ZC_AzureMuffin");
+        ZCGAIA_ITEMS.add("ZC_BerryMuffin");
+        ZCGAIA_ITEMS.add("ZC_BreakfastScramble");
+        ZCGAIA_ITEMS.add("ZC_CarrotCake");
+        ZCGAIA_ITEMS.add("ZC_CauliTaco");
+        ZCGAIA_ITEMS.add("ZC_CheesyEggplant");
+        ZCGAIA_ITEMS.add("ZC_ChiliCaliflower");
+        ZCGAIA_ITEMS.add("ZC_EggplantStirfry");
+        ZCGAIA_ITEMS.add("ZC_FishChips");
+        ZCGAIA_ITEMS.add("ZC_FishEggplantSoup");
+        ZCGAIA_ITEMS.add("ZC_FishTaco");
+        ZCGAIA_ITEMS.add("ZC_FriedEggplant");
+        ZCGAIA_ITEMS.add("ZC_FriedEggs");
+        ZCGAIA_ITEMS.add("ZC_PotatoSoup");
+        ZCGAIA_ITEMS.add("ZC_Sketti");
+        ZCGAIA_ITEMS.add("ZC_SquashSuasageSoup");
+        ZCGAIA_ITEMS.add("ZC_StuffedTurnip");
+        ZCGAIA_ITEMS.add("ZC_Sushi");
+        ZCGAIA_ITEMS.add("ZC_Tomato_Soup");
+        ZCGAIA_ITEMS.add("ZC_VeggieStew");
+        // Ingredients (consumable)
+        ZCGAIA_ITEMS.add("ZC_Sausage");
+        ZCGAIA_ITEMS.add("ZC_AzureJam");
+        ZCGAIA_ITEMS.add("ZC_BerryJam");
+        ZCGAIA_ITEMS.add("ZC_MangoHabJam");
+        // Juices & Drinks
+        ZCGAIA_ITEMS.add("ZC_AppleJuice");
+        ZCGAIA_ITEMS.add("ZC_AzureJuice");
+        ZCGAIA_ITEMS.add("ZC_BeetJuice");
+        ZCGAIA_ITEMS.add("ZC_BerryJuice");
+        ZCGAIA_ITEMS.add("ZC_CocoMilk");
+    }
+    
+    // Hatsuya Exploration Beers
+    private static final Set<String> HATSUYA_ITEMS = new HashSet<>();
+    static {
+        HATSUYA_ITEMS.add("Hat_Beer_Glow");
+        HATSUYA_ITEMS.add("Hat_Beer_Health");
+        HATSUYA_ITEMS.add("Hat_Beer_Recall");
+        HATSUYA_ITEMS.add("Hat_Beer_Return");
+        HATSUYA_ITEMS.add("Hat_Beer_Surface");
+    }
+
+    // EndgameAndQoL
+    private static final Set<String> ENDGAME_ITEMS = new HashSet<>();
+    static {
+        ENDGAME_ITEMS.add("Food_Meat_Coooked_Alpha_Trex");
+        ENDGAME_ITEMS.add("Food_Meat_Raw_Alpha_Trex");
+    }
+
+    // Spice Of Life
+    private static final Set<String> SPICE_ITEMS = new HashSet<>();
+    static {
+        SPICE_ITEMS.add("SOL_Food_RibsBBQ");
+        SPICE_ITEMS.add("SOL_Food_Bangers");
+        SPICE_ITEMS.add("SOL_Food_Wellington_Beef");
+        SPICE_ITEMS.add("SOL_Biscuits");
+        SPICE_ITEMS.add("SOL_Food_Chips");
+        SPICE_ITEMS.add("SOL_Food_CakeAzure");
+        SPICE_ITEMS.add("SOL_Food_CakeBasic");
+        SPICE_ITEMS.add("SOL_Food_CakeBerry");
+        SPICE_ITEMS.add("SOL_Food_CakeCarrot");
+        SPICE_ITEMS.add("SOL_Food_CakeChoc");
+        SPICE_ITEMS.add("SOL_Food_CakeFrosted");
+        SPICE_ITEMS.add("SOL_Food_Caramel");
+        SPICE_ITEMS.add("SOL_Food_ChocolateDark");
+        SPICE_ITEMS.add("SOL_Food_ChocolateMilk");
+        SPICE_ITEMS.add("SOL_Food_ChocolateRuby");
+        SPICE_ITEMS.add("SOL_Food_ChocolateWhite");
+        SPICE_ITEMS.add("SOL_Plant_Fruit_CocoaBeans");
+        SPICE_ITEMS.add("SOL_Ingredient_CocoaPowder");
+        SPICE_ITEMS.add("SOL_Food_CookedEggs");
+        SPICE_ITEMS.add("SOL_Cookies_Milk");
+        SPICE_ITEMS.add("SOL_Cookies_Trip");
+        SPICE_ITEMS.add("SOL_Cookies_BerryWhite");
+        SPICE_ITEMS.add("SOL_Food_CornOnCob");
+        SPICE_ITEMS.add("SOL_Ingredient_Cream");
+        SPICE_ITEMS.add("SOL_Food_CrispSalad");
+        SPICE_ITEMS.add("SOL_Food_SmokedSalmon");
+        SPICE_ITEMS.add("SOL_Food_FishChips");
+        SPICE_ITEMS.add("SOL_Food_ChickenFried");
+        SPICE_ITEMS.add("SOL_Food_GrilledAubergine");
+        SPICE_ITEMS.add("SOL_Food_SnackCreamCheese");
+        SPICE_ITEMS.add("SOL_Ingredient_Honey");
+        SPICE_ITEMS.add("SOL_Food_RoastHam");
+        SPICE_ITEMS.add("SOL_Food_IceCreamAzure");
+        SPICE_ITEMS.add("SOL_Food_IceCreamBerry");
+        SPICE_ITEMS.add("SOL_Food_IceCreamChoc");
+        SPICE_ITEMS.add("SOL_Food_IceCreamMint");
+        SPICE_ITEMS.add("SOL_Food_IceCreamVanilla");
+        SPICE_ITEMS.add("SOL_Food_Jello");
+        SPICE_ITEMS.add("SOL_Food_Lasagna");
+        SPICE_ITEMS.add("SOL_Food_Risotto_Mushroom");
+        SPICE_ITEMS.add("SOL_Food_Pancakes");
+        SPICE_ITEMS.add("SOL_Food_Pasta_Spicy");
+        SPICE_ITEMS.add("SOL_Food_Pasta_Carb");
+        SPICE_ITEMS.add("SOL_Food_Pasta_Meatball");
+        SPICE_ITEMS.add("SOL_Food_Pasta_Tomato");
+        SPICE_ITEMS.add("SOL_Food_LinksRaw");
+        SPICE_ITEMS.add("SOL_Food_PastaRaw");
+        SPICE_ITEMS.add("SOL_Food_RoastChicken");
+        SPICE_ITEMS.add("SOL_Food_Wellington_Salmon");
+        SPICE_ITEMS.add("SOL_Food_SteakChips");
+        SPICE_ITEMS.add("SOL_Food_Waffles");
+        SPICE_ITEMS.add("SOL_Food_CheesecakeBlueberry");
+    }
+
     /**
      * Gets the category for an item based on its ID.
      * @param itemId The item ID to categorize
@@ -246,6 +362,23 @@ public class ItemCategoryFilter {
         // Check exact CABA items (Caba's Artisan Harvest)
         if (CABA_ITEMS.contains(itemId)) {
             return CABA;
+        }
+        
+        // Check exact ZC Gaia items
+        if (ZCGAIA_ITEMS.contains(itemId)) {
+            return ZCGAIA;
+        }
+        
+        if (HATSUYA_ITEMS.contains(itemId)) {
+            return HATSUYA;
+        }
+
+        if (ENDGAME_ITEMS.contains(itemId)) {
+            return ENDGAME;
+        }
+
+        if (SPICE_ITEMS.contains(itemId)) {
+            return SPICE;
         }
         
         // NoCube items
