@@ -35,8 +35,8 @@ public class DrinksConfig {
         drinkValues.put("EasyHunger_WaterBowl", 5.0f);
         
         // Vanilla/Other containers
-        drinkValues.put("Container_Bucket", 10.0f);
-        drinkValues.put("Deco_Mug", 5.0f);
+        drinkValues.put("Container_Bucket_State_Filled_Water", 10.0f);
+        drinkValues.put("Deco_Mug_State_Filled_Water", 5.0f);
         
         // NoCube Orchard - Fruit Juices
         drinkValues.put("NoCube_Drink_Fruit_Juice_Apple", 16.0f);
@@ -181,11 +181,6 @@ public class DrinksConfig {
         }
     }
     
-    /**
-     * Merges default values into the current config.
-     * Only adds entries that don't already exist - preserves user customizations.
-     * @return true if any new entries were added
-     */
     public boolean mergeDefaults() {
         DrinksConfig defaultConfig = new DrinksConfig();
         Map<String, Float> defaults = defaultConfig.getDrinkValues();
@@ -194,6 +189,18 @@ public class DrinksConfig {
         Map<String, Float> mutableValues = new LinkedHashMap<>(drinkValues);
         
         boolean changed = false;
+        
+        // Legacy Config Cleanup: Forcefully remove old Keys that were replaced by Hytale Action-States.
+        // This ensures old users don't see duplicated or broken entries in UIs when updating the Mod.
+        if (mutableValues.containsKey("Deco_Mug")) {
+            mutableValues.remove("Deco_Mug");
+            changed = true;
+        }
+        if (mutableValues.containsKey("Container_Bucket")) {
+            mutableValues.remove("Container_Bucket");
+            changed = true;
+        }
+
         for (Map.Entry<String, Float> entry : defaults.entrySet()) {
             if (!mutableValues.containsKey(entry.getKey())) {
                 mutableValues.put(entry.getKey(), entry.getValue());

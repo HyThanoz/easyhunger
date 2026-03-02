@@ -71,9 +71,8 @@ public class EasyThirstHandler {
             }
 
             // Check Last Item Consumption
-            if (matchesLastItemConsumption(transaction)) {
-                String itemId = extractItemIdFromTransaction(transaction);
-                
+            String itemId = getConsumedItemId(transaction);
+            if (itemId != null) {
                 // Remove leading asterisk if present (Hytale adds this for state variants)
                 if (itemId != null && itemId.startsWith("*")) {
                     itemId = itemId.substring(1);
@@ -143,8 +142,7 @@ public class EasyThirstHandler {
         }
     }
 
-    private boolean matchesLastItemConsumption(Transaction transaction) {
-        // Same logic as FoodHandler
+    private String getConsumedItemId(Transaction transaction) {
         // Case 1: Single Slot
         if (transaction instanceof com.hypixel.hytale.server.core.inventory.transaction.ItemStackSlotTransaction) {
              com.hypixel.hytale.server.core.inventory.transaction.ItemStackSlotTransaction slotTrans = 
@@ -154,20 +152,38 @@ public class EasyThirstHandler {
              com.hypixel.hytale.server.core.inventory.ItemStack after = slotTrans.getSlotAfter();
 
              if (before != null && before.getQuantity() >= 1) {
-                // Detect quantity reduction (consumption)
+                // Return beforeId
+                String beforeId = before.getItemId();
                 int afterQty = (after != null) ? after.getQuantity() : 0;
-                if (afterQty < before.getQuantity()) return true;
                 
-                // Detect item transformation (e.g., milk bucket -> empty bucket)
+                // Detection 1: quantity reduction
+                if (afterQty < before.getQuantity()) {
+                    return beforeId;
+                }
+                
+                // Detection 2: item transformation
                 if (after != null && afterQty == before.getQuantity()) {
-                    String beforeId = before.getItemId();
                     String afterId = after.getItemId();
                     if (beforeId != null && afterId != null && !beforeId.equals(afterId)) {
-                        return true; // Item ID changed = consumption/transformation
+                        // Check if it's a fill action instead of consume.
+                        // Mostly, consuming makes it a base container (Deco_Mug) from a filled (Deco_Mug:*).
+                        // If 'after' has a state variant and 'before' does not, it's likely a fill.
+                        boolean beforeHasState = beforeId.contains(":") || beforeId.startsWith("*");
+                        boolean afterHasState = afterId.contains(":") || afterId.startsWith("*");
+                        
+                        // Treat as consumption ONLY if before HAS state (e.g., Filled_Water) 
+                        // and after does NOT HAVE state (e.g., Deco_Mug), or if item just completely changed names entirely.
+                        if (beforeHasState && !afterHasState) {
+                             return beforeId; // Example: *Deco_Mug:Filled_Water -> Deco_Mug
+                        }
+                        
+                        // If it's Soup -> Bowl, names are totally different (Preparation_Soup -> Deco_Bowl)
+                        if (!beforeHasState && !afterHasState) {
+                            return beforeId;
+                        }
                     }
                 }
              }
-             return false;
         }
 
         // Case 2: Multi-Slot
@@ -184,21 +200,14 @@ public class EasyThirstHandler {
         
                     if (before != null && before.getQuantity() >= 1) {
                         int afterQty = (after != null) ? after.getQuantity() : 0;
-                        if (afterQty < before.getQuantity()) return true;
+                        if (afterQty < before.getQuantity()) {
+                            return before.getItemId();
+                        }
                     }
                 }
             }
         }
-        return false;
-    }
-
-    private String extractItemIdFromTransaction(Transaction transaction) {
-        String info = transaction.toString();
-        Matcher matcher = ITEM_ID_PATTERN.matcher(info);
-        if (matcher.find()) {
-            return matcher.group(1);
-        }
-        return "unknown";
+        return null;
     }
 
     private boolean containsThirstKeyword(String text) {

@@ -22,6 +22,7 @@ public class EasyHungerCommand extends AbstractPlayerCommand {
         
         this.addSubCommand(new EasyHungerHideCommand());
         this.addSubCommand(new EasyHungerShowCommand());
+        this.addSubCommand(new EhAddAllCommand());
     }
 
     @Override
@@ -38,6 +39,9 @@ public class EasyHungerCommand extends AbstractPlayerCommand {
             .insert("/eh hide - Hide HUDs\n")
             .insert("/eh show - Show HUDs\n")
             .insert("/ehconfig - Open Configuration");
+
+        // The addall command should only show up if they have its specific permission, which is handled
+        // intrinsically by the command engine. We'll simply omit it from the hardcoded help menu.
             
         playerRef.sendMessage(message);
     }

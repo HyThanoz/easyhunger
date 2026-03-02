@@ -57,10 +57,11 @@ public class EasyHungerBlockPlaceSystem extends EntityEventSystem<EntityStore, P
              itemId = itemId.substring(0, itemId.indexOf(":"));
         }
 
-        // Only register timestamp if this item is configured as a drink in EasyHunger
+        // Only register timestamp if this item is configured as a drink OR food in EasyHunger
         Float drinkValue = EasyHunger.get().getDrinksConfig().getDrinkValue(itemId);
+        Float foodValue = EasyHunger.get().getFoodsConfig().getFoodValue(itemId);
         
-        if (drinkValue != null && drinkValue > 0) {
+        if ((drinkValue != null && drinkValue > 0) || (foodValue != null && foodValue > 0)) {
             LAST_PLACE_TIME.put(playerRef.getUuid(), System.currentTimeMillis());
         }
     }

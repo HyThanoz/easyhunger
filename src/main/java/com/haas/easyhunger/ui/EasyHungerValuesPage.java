@@ -17,6 +17,9 @@ import com.hypixel.hytale.server.core.ui.builder.UIEventBuilder;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hypixel.hytale.server.core.asset.type.item.config.Item;
+import com.hypixel.hytale.server.core.inventory.Inventory;
+import com.hypixel.hytale.server.core.inventory.ItemStack;
+import com.hypixel.hytale.server.core.inventory.container.ItemContainer;
 import com.haas.easyhunger.EasyHunger;
 
 import javax.annotation.Nonnull;
@@ -88,6 +91,7 @@ public class EasyHungerValuesPage extends InteractiveCustomUIPage<EasyHungerValu
         cmd.set("#ItemList.Visible", !isConfigTab);
         cmd.set("#AddSection.Visible", !isConfigTab);
         cmd.set("#AddRow.Visible", !isConfigTab);
+        cmd.set("#InvPanel.Visible", !isConfigTab);
         cmd.set("#ConfigList.Visible", isConfigTab);
 
         if (isConfigTab) {
@@ -97,6 +101,12 @@ public class EasyHungerValuesPage extends InteractiveCustomUIPage<EasyHungerValu
             evt.addEventBinding(CustomUIEventBindingType.Activating, "#TabDrinks", EventData.of("Action", "tab:drinks"), false);
             evt.addEventBinding(CustomUIEventBindingType.Activating, "#TabConfig", EventData.of("Action", "tab:config"), false);
             return;
+        }
+
+        // Render player inventory
+        Player player = store.getComponent(ref, Player.getComponentType());
+        if (player != null) {
+            renderInventory(cmd, evt, player);
         }
 
         Map<String, Float> allItems = activeTab.equals("foods") 
@@ -134,6 +144,7 @@ public class EasyHungerValuesPage extends InteractiveCustomUIPage<EasyHungerValu
                 if (ItemCategoryFilter.getCategory(itemId).equals("other")) return true;
                 // Check if item exists in game for other mods
                 Item item = (Item) Item.getAssetMap().getAsset(itemId);
+                if (item == null) item = (Item) Item.getAssetMap().getAsset("*" + itemId);
                 return item != null;
             })
             .filter(e -> {
@@ -235,6 +246,7 @@ public class EasyHungerValuesPage extends InteractiveCustomUIPage<EasyHungerValu
         // Try to get the Item object and its translation
         try {
             Item item = (Item) Item.getAssetMap().getAsset(itemId);
+            if (item == null) item = (Item) Item.getAssetMap().getAsset("*" + itemId);
             if (item != null) {
                 String key = item.getTranslationKey();
                 if (key != null) {
@@ -299,6 +311,10 @@ public class EasyHungerValuesPage extends InteractiveCustomUIPage<EasyHungerValu
         if (configId.equals("EasyHunger_WaterBowl")) {
             return "EasyHunger_WaterBowl_Empty";
         }
+        Item itemWithStar = (Item) Item.getAssetMap().getAsset("*" + configId);
+        if (itemWithStar != null) {
+            return "*" + configId;
+        }
         // Default: use as-is
         return configId;
     }
@@ -332,7 +348,25 @@ public class EasyHungerValuesPage extends InteractiveCustomUIPage<EasyHungerValu
         } else if (data.action.equals("add")) {
             handleAdd(data);
             rebuild(ref, store);
-         } else if (data.action.equals("setValue")) {
+         } else if (data.action.startsWith("invSlot:")) {
+            int slot = Integer.parseInt(data.action.substring(8));
+            ItemStack stack;
+            if (slot < 36) {
+                stack = player.getInventory().getStorage().getItemStack((short) slot);
+            } else {
+                stack = player.getInventory().getHotbar().getItemStack((short)(slot - 36));
+            }
+            if (stack != null && !stack.isEmpty()) {
+                UICommandBuilder cmd = new UICommandBuilder();
+                String itemId = stack.getItemId();
+                if (itemId != null && itemId.startsWith("*")) {
+                    itemId = itemId.substring(1);
+                }
+                cmd.set("#NewItemId.Value", itemId);
+                cmd.set("#InventoryFeedback.Text", "Selected: " + itemId);
+                sendUpdate(cmd, new UIEventBuilder(), false);
+            }
+        } else if (data.action.equals("setValue")) {
             handleSetValue(data);
         } else if (data.action.equals("setConfig")) {
             handleSetConfig(data);
@@ -367,6 +401,7 @@ public class EasyHungerValuesPage extends InteractiveCustomUIPage<EasyHungerValu
                 if (ItemCategoryFilter.getCategory(itemId).equals("other")) return true;
                 // Check if item exists in game for other mods
                 Item item = (Item) Item.getAssetMap().getAsset(itemId);
+                if (item == null) item = (Item) Item.getAssetMap().getAsset("*" + itemId);
                 return item != null;
             })
             .filter(e -> {
@@ -378,7 +413,7 @@ public class EasyHungerValuesPage extends InteractiveCustomUIPage<EasyHungerValu
             .filter(e -> matchesCategory(e.getKey()))
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
         
-        // Clear existing list (like JET does)
+        // Clear existing list container
         cmd.clear("#ItemList");
         
         itemIds.clear();
@@ -617,6 +652,48 @@ public class EasyHungerValuesPage extends InteractiveCustomUIPage<EasyHungerValu
         }
     }
 
+    /**
+     * Renders the player's inventory grid (4 rows of 9 slots + hotbar).
+     */
+    private void renderInventory(UICommandBuilder cmd, UIEventBuilder evt, Player player) {
+        // Main inventory: 4 rows of 9 slots (slots 0-35)
+        for (int row = 0; row < 4; row++) {
+            String rowId = "#InvRow" + row;
+            cmd.clear(rowId);
+            for (int i = 0; i < 9; i++) {
+                int slot = row * 9 + i;
+                cmd.append(rowId, "Pages/EasyHungerInventorySlot.ui");
+                String sel = rowId + "[" + i + "]";
+                ItemStack stack = player.getInventory().getStorage().getItemStack((short) slot);
+                if (stack != null && !stack.isEmpty()) {
+                    cmd.set(sel + " #ItemIcon.ItemId", stack.getItemId());
+                    if (stack.getQuantity() > 1) {
+                        cmd.set(sel + " #Quantity.Text", String.valueOf(stack.getQuantity()));
+                        cmd.set(sel + " #Quantity.Visible", true);
+                    }
+                }
+                evt.addEventBinding(CustomUIEventBindingType.Activating, sel + " #SlotButton",
+                    EventData.of("Action", "invSlot:" + slot), false);
+            }
+        }
+        // Hotbar: 9 slots (slots 36-44)
+        cmd.clear("#HotbarRow");
+        for (int i = 0; i < 9; i++) {
+            cmd.append("#HotbarRow", "Pages/EasyHungerInventorySlot.ui");
+            String sel = "#HotbarRow[" + i + "]";
+            ItemStack stack = player.getInventory().getHotbar().getItemStack((short) i);
+            if (stack != null && !stack.isEmpty()) {
+                cmd.set(sel + " #ItemIcon.ItemId", stack.getItemId());
+                if (stack.getQuantity() > 1) {
+                    cmd.set(sel + " #Quantity.Text", String.valueOf(stack.getQuantity()));
+                    cmd.set(sel + " #Quantity.Visible", true);
+                }
+            }
+            evt.addEventBinding(CustomUIEventBindingType.Activating, sel + " #SlotButton",
+                EventData.of("Action", "invSlot:" + (36 + i)), false);
+        }
+    }
+
     private void rebuild(Ref<EntityStore> ref, Store<EntityStore> store) {
         Player player = store.getComponent(ref, Player.getComponentType());
         if (player != null) {
@@ -641,6 +718,7 @@ public class EasyHungerValuesPage extends InteractiveCustomUIPage<EasyHungerValu
             // Check if item exists in game (or is from EasyHunger)
             if (!itemId.startsWith("EasyHunger_")) {
                 Item item = (Item) Item.getAssetMap().getAsset(itemId);
+                if (item == null) item = (Item) Item.getAssetMap().getAsset("*" + itemId);
                 if (item == null) return false;
             }
             // Check category using the filter

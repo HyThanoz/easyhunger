@@ -63,8 +63,8 @@ public class DrinkWaterInteraction extends SimpleInstantInteraction {
             if (thirst != null) {
                 float max = EasyHunger.get().getConfig().getMaxThirst();
                 if (thirst.getThirstLevel() < max) {
-                    // Default fallback if item not in config
-                    float restoreAmount = 15.0f;
+                    // Default: use CODEC value from JSON, fallback to 15.0
+                    float restoreAmount = (this.thirstRestoreAmount > 0) ? this.thirstRestoreAmount : 15.0f;
                     
                     // Get item ID using getOriginalItemType() - always available even for last item in stack
                     com.hypixel.hytale.server.core.asset.type.item.config.Item item = context.getOriginalItemType();
@@ -75,18 +75,22 @@ public class DrinkWaterInteraction extends SimpleInstantInteraction {
                         itemId = context.getHeldItem().getItemId();
                     }
                     
-                    // Clean up item ID
+                    // Clean up item ID and look up in config
                     if (itemId != null) {
                         // Remove leading asterisk if present (Hytale adds this for state variants)
                         if (itemId.startsWith("*")) {
                             itemId = itemId.substring(1);
                         }
-                        // Remove state suffix (e.g., ":Filled_Water")
-                        if (itemId.contains(":")) {
-                            itemId = itemId.substring(0, itemId.indexOf(":"));
+                        
+                        // Try full ID first (e.g. Deco_Tankard_State_Filled_Water)
+                        Float configValue = EasyHunger.get().getDrinksConfig().getDrinkValue(itemId);
+                        
+                        // If not found, try without state suffix (e.g. Deco_Tankard)
+                        if (configValue <= 0 && itemId.contains(":")) {
+                            String baseId = itemId.substring(0, itemId.indexOf(":"));
+                            configValue = EasyHunger.get().getDrinksConfig().getDrinkValue(baseId);
                         }
                         
-                        Float configValue = EasyHunger.get().getDrinksConfig().getDrinkValue(itemId);
                         if (configValue > 0) {
                             restoreAmount = configValue;
                         }

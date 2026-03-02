@@ -80,9 +80,9 @@ public class EasyHunger extends JavaPlugin {
         entityStoreRegistry.registerSystem(new com.haas.easyhunger.systems.EasyHungerJumpSystem());
         entityStoreRegistry.registerSystem(new com.haas.easyhunger.systems.EasyHungerBlockPlaceSystem());
 
-        // DISABLED: Old Food Handler (replaced by ConsumeFoodInteraction)
-        // final com.haas.easyhunger.systems.EasyHungerFoodHandler foodHandler = new com.haas.easyhunger.systems.EasyHungerFoodHandler(this.hungerComponentType);
-        // this.getEventRegistry().registerGlobal(com.hypixel.hytale.server.core.event.events.entity.LivingEntityInventoryChangeEvent.class, foodHandler::handleInventoryChange);
+        // ENABLED: Food Handler (Used ONLY for Infinite Food Mods like Eternal Meat)
+        final com.haas.easyhunger.systems.EasyHungerFoodHandler foodHandler = new com.haas.easyhunger.systems.EasyHungerFoodHandler(this.hungerComponentType);
+        this.getEventRegistry().registerGlobal(com.hypixel.hytale.server.core.event.events.entity.LivingEntityInventoryChangeEvent.class, foodHandler::handleInventoryChange);
         
         // Thirst Handler
         final com.haas.easyhunger.systems.EasyThirstHandler thirstHandler = new com.haas.easyhunger.systems.EasyThirstHandler(this.thirstComponentType);
