@@ -3,11 +3,16 @@ package com.haas.easyhunger.systems;
 import com.haas.easyhunger.EasyHunger;
 import com.haas.easyhunger.components.ThirstComponent;
 import com.haas.easyhunger.ui.EasyWaterHud;
+import com.hypixel.hytale.component.ArchetypeChunk;
+import com.hypixel.hytale.component.CommandBuffer;
 import com.hypixel.hytale.component.ComponentAccessor;
 import com.hypixel.hytale.component.ComponentType;
 import com.hypixel.hytale.component.Ref;
+import com.hypixel.hytale.component.Store;
+import com.hypixel.hytale.component.query.Query;
+import com.hypixel.hytale.component.system.EntityEventSystem;
 import com.hypixel.hytale.server.core.entity.entities.Player;
-import com.hypixel.hytale.server.core.event.events.entity.LivingEntityInventoryChangeEvent;
+import com.hypixel.hytale.server.core.inventory.InventoryChangeEvent;
 import com.hypixel.hytale.server.core.inventory.transaction.Transaction;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
@@ -18,8 +23,10 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
-public class EasyThirstHandler {
+public class EasyThirstHandler extends EntityEventSystem<EntityStore, InventoryChangeEvent> {
 
     private static final Set<String> THIRST_KEYWORDS = new HashSet<>(Arrays.asList(
         "water", "drink", "potion", "bottle", "tea", "coffee", "juice", "mug", "milk", "ale", "beer", "wine"
@@ -30,11 +37,19 @@ public class EasyThirstHandler {
     private final com.hypixel.hytale.component.ComponentType<com.hypixel.hytale.server.core.universe.world.storage.EntityStore, com.haas.easyhunger.components.ThirstComponent> thirstComponentType;
 
     public EasyThirstHandler(com.hypixel.hytale.component.ComponentType<com.hypixel.hytale.server.core.universe.world.storage.EntityStore, com.haas.easyhunger.components.ThirstComponent> thirstComponentType) {
+        super(InventoryChangeEvent.class);
         this.thirstComponentType = thirstComponentType;
     }
 
+    @Override
+    @Nullable
+    public Query<EntityStore> getQuery() {
+        return Query.and(Player.getComponentType(), this.thirstComponentType);
+    }
+
+    @Override
     @SuppressWarnings("unchecked")
-    public void handleInventoryChange(LivingEntityInventoryChangeEvent event) {
+    public void handle(int index, @Nonnull ArchetypeChunk<EntityStore> archetypeChunk, @Nonnull Store<EntityStore> store, @Nonnull CommandBuffer<EntityStore> commandBuffer, @Nonnull InventoryChangeEvent event) {
         if (this.thirstComponentType == null) {
              return;
         }
@@ -42,9 +57,8 @@ public class EasyThirstHandler {
         if (!EasyHunger.get().getConfig().isThirstEnabled()) return;
         
         try {
-            Object entity = event.getEntity();
-            if (!(entity instanceof Player)) return;
-            Player player = (Player) entity;
+            Player player = archetypeChunk.getComponent(index, Player.getComponentType());
+            if (player == null) return;
 
             Transaction transaction = event.getTransaction();
             if (transaction == null) return;
@@ -102,13 +116,13 @@ public class EasyThirstHandler {
                     // Get player's thirst component and restore thirst (same pattern as FoodHandler)
                     try {
                         // Re-use logic to get accessor for thirst component
-                        var store = player.getReference().getStore();
+                        var entityStore = player.getReference().getStore();
                         
                         ComponentAccessor accessor = null;
-                        if (store instanceof ComponentAccessor) {
-                            accessor = (ComponentAccessor) store;
+                        if (entityStore instanceof ComponentAccessor) {
+                            accessor = (ComponentAccessor) entityStore;
                         } else {
-                            accessor = (ComponentAccessor) (Object) store;
+                            accessor = (ComponentAccessor) (Object) entityStore;
                         }
 
                         ThirstComponent thirst = (ThirstComponent) accessor.getComponent(

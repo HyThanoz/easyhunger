@@ -3,12 +3,16 @@ package com.haas.easyhunger.systems;
 import com.haas.easyhunger.EasyHunger;
 import com.haas.easyhunger.EasyHungerUtils;
 import com.haas.easyhunger.components.HungerComponent;
+import com.hypixel.hytale.component.ArchetypeChunk;
 import com.hypixel.hytale.component.CommandBuffer;
 import com.hypixel.hytale.component.ComponentAccessor;
 import com.hypixel.hytale.component.ComponentType;
 import com.hypixel.hytale.component.Ref;
+import com.hypixel.hytale.component.Store;
+import com.hypixel.hytale.component.query.Query;
+import com.hypixel.hytale.component.system.EntityEventSystem;
 import com.hypixel.hytale.server.core.entity.entities.Player;
-import com.hypixel.hytale.server.core.event.events.entity.LivingEntityInventoryChangeEvent;
+import com.hypixel.hytale.server.core.inventory.InventoryChangeEvent;
 import com.hypixel.hytale.server.core.inventory.transaction.Transaction;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
@@ -20,8 +24,10 @@ import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import com.hypixel.hytale.server.core.asset.type.item.config.Item;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
-public class EasyHungerFoodHandler {
+public class EasyHungerFoodHandler extends EntityEventSystem<EntityStore, InventoryChangeEvent> {
 
 
 
@@ -32,19 +38,25 @@ public class EasyHungerFoodHandler {
     private final com.hypixel.hytale.component.ComponentType<com.hypixel.hytale.server.core.universe.world.storage.EntityStore, com.haas.easyhunger.components.HungerComponent> hungerComponentType;
 
     public EasyHungerFoodHandler(com.hypixel.hytale.component.ComponentType<com.hypixel.hytale.server.core.universe.world.storage.EntityStore, com.haas.easyhunger.components.HungerComponent> hungerComponentType) {
+        super(InventoryChangeEvent.class);
         this.hungerComponentType = hungerComponentType;
     }
 
+    @Override
+    @Nullable
+    public Query<EntityStore> getQuery() {
+        return Query.and(Player.getComponentType(), this.hungerComponentType);
+    }
+
+    @Override
     @SuppressWarnings("unchecked")
-    public void handleInventoryChange(LivingEntityInventoryChangeEvent event) {
+    public void handle(int index, @Nonnull ArchetypeChunk<EntityStore> archetypeChunk, @Nonnull Store<EntityStore> store, @Nonnull CommandBuffer<EntityStore> commandBuffer, @Nonnull InventoryChangeEvent event) {
         if (this.hungerComponentType == null) {
              return;
         }
         try {
-            Object entity = event.getEntity();
-            // Only players have hunger
-            if (!(entity instanceof Player)) return;
-            Player player = (Player) entity;
+            Player player = archetypeChunk.getComponent(index, Player.getComponentType());
+            if (player == null) return;
 
             Transaction transaction = event.getTransaction();
             if (transaction == null) return;
@@ -69,8 +81,8 @@ public class EasyHungerFoodHandler {
             }
             
             try {
-                var store = player.getReference().getStore();
-                ComponentAccessor accessor = (store instanceof ComponentAccessor) ? (ComponentAccessor) store : (ComponentAccessor) (Object) store;
+                var entityStore = player.getReference().getStore();
+                ComponentAccessor accessor = (entityStore instanceof ComponentAccessor) ? (ComponentAccessor) entityStore : (ComponentAccessor) (Object) entityStore;
                 PlayerRef playerRef = (PlayerRef) accessor.getComponent((Ref) player.getReference(), (ComponentType) (Object) PlayerRef.getComponentType());
                 
                 if (playerRef != null) {
@@ -99,8 +111,8 @@ public class EasyHungerFoodHandler {
                         
                         if (hungerRestore > 0) {
                              try {
-                                 var store = player.getReference().getStore();
-                                 ComponentAccessor accessor = (store instanceof ComponentAccessor) ? (ComponentAccessor) store : (ComponentAccessor) (Object) store;
+                                 var entityStore = player.getReference().getStore();
+                                 ComponentAccessor accessor = (entityStore instanceof ComponentAccessor) ? (ComponentAccessor) entityStore : (ComponentAccessor) (Object) entityStore;
         
                                  HungerComponent hunger = (HungerComponent) accessor.getComponent(
                                      (Ref) player.getReference(), 

@@ -1,9 +1,9 @@
-﻿plugins {
+plugins {
     id("java")
 }
 
 group = "Haas"
-version = "1.2.3"
+version = "1.2.4"
 
 repositories {
     mavenCentral()
@@ -45,7 +45,7 @@ val generateManifest by tasks.registering {
               "Group": "${project.group}",
               "Name": "${rootProject.name}",
               "Version": "${project.version}",
-              "ServerVersion": "2026.02.17-255364b8e",
+              "ServerVersion": "2026.03.26-89796e57b",
               "Main": "com.haas.easyhunger.EasyHunger",
               "Authors": [ { "Name": "haasapenas" } ],
               "IncludesAssetPack": true
