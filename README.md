@@ -89,4 +89,8 @@ This mod is based on **Hungry** by [Aex12](https://www.curseforge.com/hytale/mod
 
 This project is licensed under the **GNU Affero General Public License v3.0 (AGPLv3)**.
 
+**This is a modified version, maintained by MyTale (mytale.es).** What changed and when is listed in
+[MYTALE-CHANGES.md](MYTALE-CHANGES.md); the exact source of each version that runs on the server is
+tagged `mytale-<version>`.
+
 See [LICENSE](LICENSE) for details.

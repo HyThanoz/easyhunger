@@ -93,3 +93,8 @@ tasks.named<ProcessResources>("processResources") {
 }
 
 
+
+// AGPL-3.0: el LICENSE va dentro del jar (corremos una version modificada; ver MYTALE-CHANGES.md).
+tasks.jar {
+    from("LICENSE")
+}
