@@ -2,7 +2,6 @@ package com.haas.easyhunger.commands;
 
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
-import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.command.system.CommandContext;
 import com.hypixel.hytale.server.core.command.system.arguments.system.RequiredArg;
 import com.hypixel.hytale.server.core.command.system.arguments.types.ArgTypes;
@@ -13,6 +12,7 @@ import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.haas.easyhunger.components.HungerComponent;
 import com.haas.easyhunger.ui.EasyHungerHud;
+import com.haas.easyhunger.utils.Msg;
 import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
 
 public class SetHungerCommand extends AbstractPlayerCommand {
@@ -34,16 +34,17 @@ public class SetHungerCommand extends AbstractPlayerCommand {
     ) {
         HungerComponent hungerComponent = store.getComponent(ref, HungerComponent.getComponentType());
         if (hungerComponent == null) {
-            context.sendMessage(Message.raw("Hunger component not found."));
+            context.sendMessage(Msg.error(Msg.quien(context), "nivel.sin_hambre"));
             return;
         }
 
         if (newHungerLevel < 0 || newHungerLevel > 100) {
-            context.sendMessage(Message.raw("Hunger level must be between 0 and 100."));
+            context.sendMessage(Msg.error(Msg.quien(context), "nivel.hambre_rango"));
             return;
         }
         hungerComponent.setHungerLevel(newHungerLevel);
-        context.sendMessage(Message.raw("Hunger level has been set to " + newHungerLevel + " for player " + targetPlayerRef.getUsername() + "."));
+        context.sendMessage(Msg.info(Msg.quien(context), "nivel.hambre_ok",
+                "jugador", targetPlayerRef.getUsername(), "nivel", newHungerLevel));
         EasyHungerHud.updatePlayerHungerLevel(targetPlayerRef, newHungerLevel);
     }
 
@@ -75,7 +76,7 @@ public class SetHungerCommand extends AbstractPlayerCommand {
             float newHungerLevel = this.hungerLevel.get(context);
             Ref<EntityStore> ref = targetPlayerRef.getReference();
             if (ref == null || !ref.isValid()) {
-                context.sendMessage(Message.raw("Player not found or not in the world."));
+                context.sendMessage(Msg.error(Msg.quien(context), "nivel.sin_jugador"));
                 return;
             }
             Store<EntityStore> store = ref.getStore();

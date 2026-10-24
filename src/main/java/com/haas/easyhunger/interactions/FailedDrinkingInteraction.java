@@ -47,9 +47,11 @@ public class FailedDrinkingInteraction extends SimpleInstantInteraction {
             
             // Clear preview on HUD
             EasyWaterHud.updatePlayerThirstPreview(playerRef, 0.0f);
+            // La vista previa puede estar en la barra de hambre si el item era un plato.
+            com.haas.easyhunger.ui.EasyHungerHud.updatePlayerHungerPreview(playerRef, 0.0f);
             
         } catch (Exception e) {
-            EasyHunger.logInfo("FAILED DRINKING ERROR: " + e.toString());
+            EasyHunger.LOGGER.at(java.util.logging.Level.WARNING).withCause(e).log("FAILED DRINKING ERROR");
         }
     }
 }

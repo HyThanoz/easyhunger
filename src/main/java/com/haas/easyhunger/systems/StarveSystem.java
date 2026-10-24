@@ -23,6 +23,7 @@ import com.haas.easyhunger.ui.EasyHungerHud;
 import com.haas.easyhunger.components.HungerComponent;
 import com.haas.easyhunger.utils.HungerProtectionUtils;
 import com.haas.easyhunger.utils.BiomeUtils;
+import com.haas.easyhunger.utils.WorldGate;
 import com.haas.easyhunger.config.BiomeModifiersConfig;
 import com.hypixel.hytale.server.core.entity.EntityUtils;
 import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
@@ -54,7 +55,6 @@ public class StarveSystem extends EntityTickingSystem<EntityStore> {
             EntityStatMap.getComponentType(),
             Player.getComponentType(),
             PlayerRef.getComponentType(),
-            PlayerRef.getComponentType(),
             Query.not(DeathComponent.getComponentType()),
             Query.not(Invulnerable.getComponentType())
         );
@@ -68,6 +68,10 @@ public class StarveSystem extends EntityTickingSystem<EntityStore> {
         @NonNullDecl Store<EntityStore> store,
         @NonNullDecl CommandBuffer<EntityStore> commandBuffer
     ) {
+        // Mundo excluido: no se drena, no se hace dano y no se toca el HUD. El nivel se queda
+        // congelado tal cual, que es justo lo que se quiere al pasar por el lobby.
+        if (!WorldGate.isActive(store)) return;
+
         HungerComponent hunger = archetypeChunk.getComponent(index, HungerComponent.getComponentType());
         EntityStatMap entityStatMap = archetypeChunk.getComponent(index, EntityStatMap.getComponentType());
         if (hunger == null || entityStatMap == null) return;
@@ -97,19 +101,12 @@ public class StarveSystem extends EntityTickingSystem<EntityStore> {
             return;
         }
 
-        // Check if player is idle (pause hunger while idle)
+        // Check if player is idle (pause hunger while idle) - position + rotation based
         if (EasyHunger.get().getConfig().isIdlePauseEnabled()) {
-            MovementStatesComponent movementComp = archetypeChunk.getComponent(index, MovementStatesComponent.getComponentType());
-            if (movementComp != null) {
-                MovementStates states = movementComp.getMovementStates();
-                if (states != null && states.idle) {
-                    hunger.addIdleTime(EasyHunger.get().getConfig().getStarvationTickRate());
-                    if (hunger.getIdleTime() >= EasyHunger.get().getConfig().getIdlePauseSeconds()) {
-                        return; // Paused
-                    }
-                } else {
-                    hunger.resetIdleTime();
-                }
+            com.hypixel.hytale.server.core.modules.entity.component.TransformComponent transform =
+                archetypeChunk.getComponent(index, com.hypixel.hytale.server.core.modules.entity.component.TransformComponent.getComponentType());
+            if (hunger.getIdleTracker().updateAndIsPaused(transform)) {
+                return; // Paused
             }
         }
         
@@ -119,8 +116,9 @@ public class StarveSystem extends EntityTickingSystem<EntityStore> {
         float biomeMultiplier = 1.0f;
         Player player = archetypeChunk.getComponent(index, Player.getComponentType());
         if (player != null && player.getWorld() != null) {
-            Holder holder = EntityUtils.toHolder(index, archetypeChunk);
-            String biomeName = BiomeUtils.getPlayerBiomeName(player, holder);
+            com.hypixel.hytale.server.core.modules.entity.component.TransformComponent transform =
+                archetypeChunk.getComponent(index, com.hypixel.hytale.server.core.modules.entity.component.TransformComponent.getComponentType());
+            String biomeName = BiomeUtils.getPlayerBiomeName(player, transform);
             biomeMultiplier = EasyHunger.get().getBiomeConfig().getHungerMultiplier(biomeName);
         }
         
@@ -133,7 +131,11 @@ public class StarveSystem extends EntityTickingSystem<EntityStore> {
         if (hungerLevel != 0 && hungerLevel < EasyHunger.get().getConfig().getHungryThreshold()) {
             EffectControllerComponent effectController = commandBuffer.getComponent(ref, EffectControllerComponent.getComponentType());
             if (effectController == null) return;
-            
+
+            // Si viene de 0 y comio poco (sin llegar al umbral), Starving seguia puesto hasta
+            // agotar sus 300 s. Se quita aqui; Hungry no se toca.
+            removeStarvingEffect(ref, commandBuffer, effectController);
+
             // Only apply if not already hungry
             if (!hasHungerEffect(effectController)) {
                 EntityEffect hungryEffect = EasyHungerUtils.getHungryEntityEffect();
@@ -200,6 +202,20 @@ public class StarveSystem extends EntityTickingSystem<EntityStore> {
         return false;
     }
     
+    private void removeStarvingEffect(
+        Ref<EntityStore> ref,
+        CommandBuffer<EntityStore> commandBuffer,
+        EffectControllerComponent effectController
+    ) {
+        ActiveEntityEffect[] effects = effectController.getAllActiveEntityEffects();
+        if (effects == null) return;
+        for (ActiveEntityEffect effect : effects) {
+            if (EasyHungerUtils.activeEntityEffectIsStarving(effect)) {
+                effectController.removeEffect(ref, effect.getEntityEffectIndex(), commandBuffer);
+            }
+        }
+    }
+
     private boolean hasStarvingEffect(EffectControllerComponent effectController) {
         ActiveEntityEffect[] effects = effectController.getAllActiveEntityEffects();
         if (effects != null) {

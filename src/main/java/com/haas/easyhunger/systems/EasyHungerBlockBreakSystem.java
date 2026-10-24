@@ -14,6 +14,7 @@ import com.hypixel.hytale.server.core.event.events.ecs.BreakBlockEvent;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.haas.easyhunger.utils.HungerProtectionUtils;
+import com.haas.easyhunger.utils.WorldGate;
 
 import javax.annotation.Nonnull;
 
@@ -34,6 +35,9 @@ public class EasyHungerBlockBreakSystem extends EntityEventSystem<EntityStore, B
                        @Nonnull CommandBuffer<EntityStore> commandBuffer,
                        @Nonnull BreakBlockEvent event) {
         
+        // Mundo excluido: picar en el lobby no cuesta hambre.
+        if (!WorldGate.isActive(store)) return;
+
         HungerComponent hunger = chunk.getComponent(index, HungerComponent.getComponentType());
         if (hunger == null) return;
 

@@ -4,6 +4,7 @@ import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.protocol.GameMode;
 import com.hypixel.hytale.protocol.Packet;
+import com.hypixel.hytale.protocol.packets.player.SetGameMode;
 import com.hypixel.hytale.server.core.auth.PlayerAuthentication;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.io.PacketHandler;
@@ -16,15 +17,14 @@ import com.haas.easyhunger.EasyHungerUtils;
 import com.haas.easyhunger.components.HungerComponent;
 import com.haas.easyhunger.ui.EasyHungerHud;
 import com.haas.easyhunger.ui.EasyWaterHud;
+import com.haas.easyhunger.utils.WorldGate;
 
 import java.util.UUID;
 
 public class GameModeChangeListener implements PacketWatcher {
-    static private final int SET_GAMEMODE_PACKET_ID = 101;
-
     @Override
     public void accept(PacketHandler packetHandler, Packet packet) {
-        if (packet.getId() != SET_GAMEMODE_PACKET_ID) return;
+        if (packet.getId() != SetGameMode.PACKET_ID) return;
 
         PlayerAuthentication playerAuthentication = packetHandler.getAuth();
         if (playerAuthentication == null) return;
@@ -48,6 +48,10 @@ public class GameModeChangeListener implements PacketWatcher {
             EasyWaterHud.updatePlayerGameMode(playerRef, gameMode); // Update Thirst GUI too
             if (gameMode == GameMode.Creative) {
                 EasyHungerUtils.removeHungerRelatedEffectsFromEntity(ref, store);
+                // Mundo excluido (Hub): el estado se congela, pasar a Creativo no rellena hambre
+                // ni sed (ver WorldGate). Quitar los efectos de arriba no restaura nada: al volver
+                // a un mundo activo, StarveSystem los vuelve a poner si toca.
+                if (!WorldGate.isActive(store)) return;
                 EasyHungerUtils.setPlayerHungerLevel(ref, store, com.haas.easyhunger.EasyHunger.get().getConfig().getMaxHunger());
                 
                 // Auto-Fill Thirst

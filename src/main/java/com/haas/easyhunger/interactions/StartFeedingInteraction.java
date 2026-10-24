@@ -55,18 +55,18 @@ public class StartFeedingInteraction extends SimpleInstantInteraction {
             
             if (playerRef == null || item == null) return;
             
-            // Get hunger restoration value from config or JSON
+            // Misma fuente que ConsumeFoodInteraction: solo FoodsConfig. Antes, si la comida no
+            // estaba configurada, la vista previa caia en HungerRestoreAmount del JSON (5/10/15) y
+            // prometia hambre que ConsumeFood nunca daba (restaura 0). Sin configurar: sin vista previa.
+            // El campo HungerRestoreAmount se sigue leyendo del JSON para que el codec no falle.
             String itemId = item.getId();
-            float restoreAmount = EasyHunger.get().getFoodsConfig().getFoodValue(itemId);
-            if (restoreAmount <= 0) {
-                restoreAmount = this.hungerRestoreAmount;
-            }
-            
+            float restoreAmount = Math.max(0.0f, EasyHunger.get().getFoodsConfig().getFoodValue(itemId));
+
             // Show preview on HUD
             EasyHungerHud.updatePlayerHungerPreview(playerRef, restoreAmount);
             
         } catch (Exception e) {
-            EasyHunger.logInfo("START FEEDING ERROR: " + e.toString());
+            EasyHunger.LOGGER.at(java.util.logging.Level.WARNING).withCause(e).log("START FEEDING ERROR");
         }
     }
 }

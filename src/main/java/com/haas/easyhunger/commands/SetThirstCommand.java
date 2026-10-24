@@ -2,7 +2,6 @@ package com.haas.easyhunger.commands;
 
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
-import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.command.system.CommandContext;
 import com.hypixel.hytale.server.core.command.system.arguments.system.RequiredArg;
 import com.hypixel.hytale.server.core.command.system.arguments.types.ArgTypes;
@@ -13,6 +12,7 @@ import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.haas.easyhunger.components.ThirstComponent;
 import com.haas.easyhunger.ui.EasyWaterHud;
+import com.haas.easyhunger.utils.Msg;
 import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
 
 public class SetThirstCommand extends AbstractPlayerCommand {
@@ -34,16 +34,17 @@ public class SetThirstCommand extends AbstractPlayerCommand {
     ) {
         ThirstComponent thirstComponent = store.getComponent(ref, ThirstComponent.getComponentType());
         if (thirstComponent == null) {
-            context.sendMessage(Message.raw("Thirst component not found."));
+            context.sendMessage(Msg.error(Msg.quien(context), "nivel.sin_sed"));
             return;
         }
 
         if (newThirstLevel < 0 || newThirstLevel > 100) {
-            context.sendMessage(Message.raw("Thirst level must be between 0 and 100."));
+            context.sendMessage(Msg.error(Msg.quien(context), "nivel.sed_rango"));
             return;
         }
         thirstComponent.setThirstLevel(newThirstLevel);
-        context.sendMessage(Message.raw("Thirst level has been set to " + newThirstLevel + " for player " + targetPlayerRef.getUsername() + "."));
+        context.sendMessage(Msg.info(Msg.quien(context), "nivel.sed_ok",
+                "jugador", targetPlayerRef.getUsername(), "nivel", newThirstLevel));
         EasyWaterHud.updatePlayerThirstLevel(targetPlayerRef, newThirstLevel);
     }
 
@@ -75,7 +76,7 @@ public class SetThirstCommand extends AbstractPlayerCommand {
             float newThirstLevel = this.thirstLevel.get(context);
             Ref<EntityStore> ref = targetPlayerRef.getReference();
             if (ref == null || !ref.isValid()) {
-                context.sendMessage(Message.raw("Player not found or not in the world."));
+                context.sendMessage(Msg.error(Msg.quien(context), "nivel.sin_jugador"));
                 return;
             }
             Store<EntityStore> store = ref.getStore();

@@ -21,6 +21,7 @@ import com.hypixel.hytale.server.core.entity.movement.MovementStatesComponent;
 import com.hypixel.hytale.protocol.MovementStates;
 import com.haas.easyhunger.utils.HungerProtectionUtils;
 import com.haas.easyhunger.utils.BiomeUtils;
+import com.haas.easyhunger.utils.WorldGate;
 import com.hypixel.hytale.server.core.entity.EntityUtils;
 import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
 
@@ -66,6 +67,9 @@ public class EasyThirstSystem extends EntityTickingSystem<EntityStore> {
     ) {
         // Skip if thirst system is disabled
         if (!EasyHunger.get().getConfig().isThirstEnabled()) return;
+
+        // Mundo excluido: nivel congelado, sin drenaje ni dano ni HUD.
+        if (!WorldGate.isActive(store)) return;
         
         ThirstComponent thirst = archetypeChunk.getComponent(index, ThirstComponent.getComponentType());
         if (thirst == null) return;
@@ -104,18 +108,12 @@ public class EasyThirstSystem extends EntityTickingSystem<EntityStore> {
             return;
         }
 
-        // Check if player is idle (pause thirst while idle)
+        // Check if player is idle (pause thirst while idle) - position + rotation based
         if (EasyHunger.get().getConfig().isIdlePauseEnabled()) {
-            if (movementComp != null) {
-                MovementStates states = movementComp.getMovementStates();
-                if (states != null && states.idle) {
-                    thirst.addIdleTime(EasyHunger.get().getConfig().getStarvationTickRate());
-                    if (thirst.getIdleTime() >= EasyHunger.get().getConfig().getIdlePauseSeconds()) {
-                        return; // Paused
-                    }
-                } else {
-                    thirst.resetIdleTime();
-                }
+            com.hypixel.hytale.server.core.modules.entity.component.TransformComponent transform =
+                archetypeChunk.getComponent(index, com.hypixel.hytale.server.core.modules.entity.component.TransformComponent.getComponentType());
+            if (thirst.getIdleTracker().updateAndIsPaused(transform)) {
+                return; // Paused
             }
         }
         
@@ -123,8 +121,9 @@ public class EasyThirstSystem extends EntityTickingSystem<EntityStore> {
         float biomeMultiplier = 1.0f;
         Player player = archetypeChunk.getComponent(index, Player.getComponentType());
         if (player != null && player.getWorld() != null) {
-            Holder holder = EntityUtils.toHolder(index, archetypeChunk);
-            String biomeName = BiomeUtils.getPlayerBiomeName(player, holder);
+            com.hypixel.hytale.server.core.modules.entity.component.TransformComponent transform =
+                archetypeChunk.getComponent(index, com.hypixel.hytale.server.core.modules.entity.component.TransformComponent.getComponentType());
+            String biomeName = BiomeUtils.getPlayerBiomeName(player, transform);
             biomeMultiplier = EasyHunger.get().getBiomeConfig().getThirstMultiplier(biomeName);
         }
         

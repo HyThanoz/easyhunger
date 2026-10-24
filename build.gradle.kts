@@ -2,14 +2,27 @@ plugins {
     id("java")
 }
 
-group = "Haas"
-version = "1.2.4"
+group = "es.mytale"
+version = "1.5.26"
 
 repositories {
     mavenCentral()
 }
 
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+}
+
+// Ruta unica al HytaleServer.jar, definida en ~/.gradle/gradle.properties
+// (hytaleServerJar=...). Todos los mods de MyTale compilan contra el mismo jar.
+val hytaleServerJar: String = (findProperty("hytaleServerJar") as String?)
+    ?: System.getProperty("user.home") + "/AppData/Roaming/Hytale/install/release/package/game/latest/Server/HytaleServer.jar"
+
 dependencies {
+    compileOnly(files(hytaleServerJar))
+    // libs/ queda para dependencias opcionales de otros mods, no para el server jar.
     compileOnly(fileTree("libs") { include("*.jar") })
     testImplementation(platform("org.junit:junit-bom:5.10.0"))
     testImplementation("org.junit.jupiter:junit-jupiter")
@@ -18,6 +31,17 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
+}
+
+tasks.withType<JavaCompile> {
+    options.encoding = "UTF-8"
+    options.release.set(25)
+    doFirst {
+        require(file(hytaleServerJar).exists()) {
+            "No encuentro HytaleServer.jar en:\n  $hytaleServerJar\n" +
+            "Corrige la ruta en C:/Users/<usuario>/.gradle/gradle.properties (hytaleServerJar=...)"
+        }
+    }
 }
 
 /**
@@ -45,7 +69,7 @@ val generateManifest by tasks.registering {
               "Group": "${project.group}",
               "Name": "${rootProject.name}",
               "Version": "${project.version}",
-              "ServerVersion": "2026.03.26-89796e57b",
+              "ServerVersion": "*",
               "Main": "com.haas.easyhunger.EasyHunger",
               "Authors": [ { "Name": "haasapenas" } ],
               "IncludesAssetPack": true

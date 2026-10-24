@@ -1,0 +1,20 @@
+general.damageCauses.starvation = Inanición
+general.damageCauses.thirst = Deshidratación
+
+items.EasyHunger_WaterBowl_Empty.name = Cuenco Vacío
+items.EasyHunger_WaterBowl_Empty.description = Un cuenco simple que se puede llenar de agua
+items.EasyHunger_WaterBowl_Filled.name = Cuenco de Agua
+items.EasyHunger_WaterBowl_Filled.description = Un cuenco lleno de agua. Bébelo para recuperar la sed.
+
+items.EasyHunger_Odre_Empty.name = Odre Vacío
+items.EasyHunger_Odre_Empty.description = Un odre de cuero que se puede llenar de agua
+items.EasyHunger_Odre_Filled.name = Odre
+items.EasyHunger_Odre_Filled.description = Un odre lleno de agua fresca. Bébelo para recuperar la sed.
+
+items.EasyHunger_Flask_Empty.name = Frasco Vacío
+items.EasyHunger_Flask_Empty.description = Un frasco vacío que se puede llenar de agua
+items.EasyHunger_Flask_Filled.name = Frasco de Agua
+items.EasyHunger_Flask_Filled.description = Un frasco lleno de agua fresca. Bébelo para recuperar la sed.
+
+items.EasyHunger_Template_Waterskin.name = Odre
+items.EasyHunger_Template_Waterskin.description = Lleva agua contigo

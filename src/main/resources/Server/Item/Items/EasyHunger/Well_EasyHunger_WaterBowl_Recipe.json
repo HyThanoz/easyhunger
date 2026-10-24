@@ -1,4 +1,5 @@
 {
+    "Quality": "Template",
     "Recipe": {
         "PrimaryOutput": {
             "ItemId": "*EasyHunger_WaterBowl_Empty_State_Filled_Water"

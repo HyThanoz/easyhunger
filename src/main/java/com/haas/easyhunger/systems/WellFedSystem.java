@@ -15,10 +15,10 @@ import com.haas.easyhunger.config.EasyHungerConfig;
 import com.haas.easyhunger.EasyHunger;
 import com.haas.easyhunger.components.HungerComponent;
 import com.haas.easyhunger.components.ThirstComponent;
+import com.haas.easyhunger.utils.WorldGate;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.lang.reflect.Field;
 
 /**
  * System that applies regeneration buffs based on hunger and thirst levels.
@@ -27,7 +27,6 @@ import java.lang.reflect.Field;
  */
 public class WellFedSystem extends EntityTickingSystem<EntityStore> {
     
-    private final float wellFedThreshold;
     private final float tickRate;
     
     // Effect IDs
@@ -38,17 +37,25 @@ public class WellFedSystem extends EntityTickingSystem<EntityStore> {
     private EntityEffect hydratedEffect;
     private boolean effectsLoaded = false;
     
-    private WellFedSystem(float wellFedThreshold, float tickRate) {
-        this.wellFedThreshold = wellFedThreshold;
+    /** Cada cuantos segundos se comprueban Nourished y Hydrated. */
+    private static final float CHECK_INTERVAL_SECONDS = 1.0f;
+
+    private WellFedSystem(float tickRate) {
         this.tickRate = tickRate;
     }
-    
+
+    /**
+     * Este sistema se registra SIEMPRE, tambien con WellFedEnabled=false.
+     *
+     * Motivo: Nourished y Hydrated son efectos `"Infinite": true` y este sistema es el UNICO que
+     * los retira. Cuando solo se registraba con la opcion activada, apagarla no quitaba los buffs
+     * — se quedaban puestos para siempre en quien ya los tuviera, con su Health +0.5 y Stamina
+     * +0.2 incluidos. Es decir, "desactivado" significaba en realidad "congelado".
+     *
+     * Ahora con la opcion apagada el sistema sigue vivo y su unico trabajo es limpiar.
+     */
     public static WellFedSystem create() {
-        EasyHungerConfig conf = EasyHunger.get().getConfig();
-        return new WellFedSystem(
-            conf.getWellFedThreshold(),
-            1.0f // Check every 1 second
-        );
+        return new WellFedSystem(CHECK_INTERVAL_SECONDS);
     }
     
     @Nullable
@@ -96,6 +103,10 @@ public class WellFedSystem extends EntityTickingSystem<EntityStore> {
             }
         }
         
+        // Mundo excluido: tampoco se conceden los buffs de WellFed. La carga de efectos de arriba
+        // se deja fuera del gate a proposito, para que no dependa de en que mundo cae el 1er tick.
+        if (!WorldGate.isActive(store)) return;
+
         HungerComponent hunger = archetypeChunk.getComponent(index, HungerComponent.getComponentType());
         ThirstComponent thirst = archetypeChunk.getComponent(index, ThirstComponent.getComponentType());
         if (hunger == null || thirst == null) return;
@@ -110,31 +121,41 @@ public class WellFedSystem extends EntityTickingSystem<EntityStore> {
         float hungerLevel = hunger.getHungerLevel();
         float thirstLevel = thirst.getThirstLevel();
         
-        boolean shouldBeNourished = hungerLevel >= wellFedThreshold;
-        boolean shouldBeHydrated = thirstLevel >= wellFedThreshold;
+        // Se lee la config en cada pasada, no al construir: si la opcion esta apagada, ambos
+        // quedan en false y abajo se dispara la rama que RETIRA los efectos.
+        EasyHungerConfig conf = EasyHunger.get().getConfig();
+        boolean wellFedEnabled = conf.isWellFedEnabled();
+        float wellFedThreshold = conf.getWellFedThreshold();
+
+        boolean shouldBeNourished = wellFedEnabled && hungerLevel >= wellFedThreshold;
+        boolean shouldBeHydrated = wellFedEnabled && thirstLevel >= wellFedThreshold;
         
         Ref<EntityStore> ref = archetypeChunk.getReferenceTo(index);
         EffectControllerComponent effectController = commandBuffer.getComponent(ref, EffectControllerComponent.getComponentType());
         if (effectController == null) return;
         
-        // Handle Nourished effect (Health regen from food)
-        if (nourishedEffect != null) {
-            boolean hasNourished = hasEffect(effectController, NOURISHED_EFFECT_ID);
-            if (shouldBeNourished && !hasNourished) {
+        // El null-check del asset envuelve SOLO el alta: para retirar un efecto no hace falta el
+        // EntityEffect (removeEffect va por indice sobre los activos). Antes ambas ramas estaban
+        // dentro del if, asi que si el asset no cargaba tampoco se podia limpiar.
+
+        // Nourished — regeneracion de vida por estar bien alimentado
+        boolean hasNourished = hasEffect(effectController, NOURISHED_EFFECT_ID);
+        if (shouldBeNourished && !hasNourished) {
+            if (nourishedEffect != null) {
                 effectController.addEffect(ref, nourishedEffect, commandBuffer);
-            } else if (!shouldBeNourished && hasNourished) {
-                removeEffect(ref, commandBuffer, effectController, NOURISHED_EFFECT_ID);
             }
+        } else if (!shouldBeNourished && hasNourished) {
+            removeEffect(ref, commandBuffer, effectController, NOURISHED_EFFECT_ID);
         }
-        
-        // Handle Hydrated effect (Stamina regen from water)
-        if (hydratedEffect != null) {
-            boolean hasHydrated = hasEffect(effectController, HYDRATED_EFFECT_ID);
-            if (shouldBeHydrated && !hasHydrated) {
+
+        // Hydrated — regeneracion de estamina por estar hidratado
+        boolean hasHydrated = hasEffect(effectController, HYDRATED_EFFECT_ID);
+        if (shouldBeHydrated && !hasHydrated) {
+            if (hydratedEffect != null) {
                 effectController.addEffect(ref, hydratedEffect, commandBuffer);
-            } else if (!shouldBeHydrated && hasHydrated) {
-                removeEffect(ref, commandBuffer, effectController, HYDRATED_EFFECT_ID);
             }
+        } else if (!shouldBeHydrated && hasHydrated) {
+            removeEffect(ref, commandBuffer, effectController, HYDRATED_EFFECT_ID);
         }
     }
     
@@ -149,14 +170,7 @@ public class WellFedSystem extends EntityTickingSystem<EntityStore> {
     }
     
     private boolean isEffect(ActiveEntityEffect effect, String effectId) {
-        try {
-            Field f = ActiveEntityEffect.class.getDeclaredField("entityEffectId");
-            f.setAccessible(true);
-            String id = (String) f.get(effect);
-            return id.equals(effectId);
-        } catch (NoSuchFieldException | IllegalAccessException e) {
-            return false;
-        }
+        return com.haas.easyhunger.EasyHungerUtils.activeEntityEffectIs(effect, effectId);
     }
     
     private void removeEffect(Ref<EntityStore> ref, ComponentAccessor<EntityStore> accessor, EffectControllerComponent effectController, String effectId) {

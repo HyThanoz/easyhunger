@@ -49,7 +49,7 @@ public class FailedFeedingInteraction extends SimpleInstantInteraction {
             EasyHungerHud.updatePlayerHungerPreview(playerRef, 0.0f);
             
         } catch (Exception e) {
-            EasyHunger.logInfo("FAILED FEEDING ERROR: " + e.toString());
+            EasyHunger.LOGGER.at(java.util.logging.Level.WARNING).withCause(e).log("FAILED FEEDING ERROR");
         }
     }
 }

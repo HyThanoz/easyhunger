@@ -23,8 +23,8 @@ public class HungerComponent implements Component<EntityStore> {
     // Optimization: Track last sent level to avoid spamming HUD updates
     private float lastSentHunger = -1.0f;
     
-    // Idle system tracking
-    private float idleTime = 0.0f;
+    // Pausa por inactividad (estado compartido con la sed por la clase IdleTracker)
+    private final IdleTracker idle = new IdleTracker();
 
     public HungerComponent() {
         this.hungerLevel = EasyHunger.get().getConfig().getMaxHunger(); // Max hunger level from config
@@ -38,7 +38,7 @@ public class HungerComponent implements Component<EntityStore> {
         this.hungerLevel = other.hungerLevel;
         this.elapsedTime = other.elapsedTime;
         this.lowestStaminaSeen = other.lowestStaminaSeen;
-        this.idleTime = other.idleTime;
+        this.idle.copyIdleTimeFrom(other.idle);
     }
 
     @Nullable
@@ -76,10 +76,7 @@ public class HungerComponent implements Component<EntityStore> {
     public void addWellFedElapsedTime(float dt) { wellFedElapsedTime += dt; }
     public void resetWellFedElapsedTime() { wellFedElapsedTime = 0.0f; }
 
-    // Idle time tracking
-    public float getIdleTime() { return idleTime; }
-    public void addIdleTime(float dt) { idleTime += dt; }
-    public void resetIdleTime() { idleTime = 0.0f; }
+    public IdleTracker getIdleTracker() { return idle; }
 
     public float getHungerLevel () {
         return this.hungerLevel;

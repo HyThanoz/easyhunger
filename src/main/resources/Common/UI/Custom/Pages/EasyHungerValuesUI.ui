@@ -1,5 +1,133 @@
 $C = "../Common.ui";
 
+// ===================== MYTALE TOKENS v1 BEGIN (pieza comun de MyTale) =====================
+// Texto
+@TitleStyle  = LabelStyle(FontSize: 20, TextColor: #FFC233, RenderBold: true, RenderUppercase: true, HorizontalAlignment: Center, VerticalAlignment: Center, LetterSpacing: 0.6);
+@Section     = LabelStyle(FontSize: 12, TextColor: #FFC233, RenderBold: true, RenderUppercase: true, LetterSpacing: 0.5, VerticalAlignment: Center);
+@SubHeader   = LabelStyle(FontSize: 11, TextColor: #FFC233, RenderBold: true, RenderUppercase: true, LetterSpacing: 0.5, VerticalAlignment: Center);
+@CardHead    = LabelStyle(FontSize: 14, TextColor: #FFC233, RenderBold: true, VerticalAlignment: Center);
+@CardBody    = LabelStyle(FontSize: 13, TextColor: #DCDFE8, Wrap: true);
+@Body        = LabelStyle(FontSize: 12, TextColor: #F6F7F9, Wrap: true);
+@BodyMuted   = LabelStyle(FontSize: 12, TextColor: #BEC1CF, Wrap: true);
+@Meta        = LabelStyle(FontSize: 12, TextColor: #FFC233, RenderBold: true, VerticalAlignment: Center);
+@MetaMuted   = LabelStyle(FontSize: 12, TextColor: #BEC1CF, VerticalAlignment: Center);
+@EntryTitle  = LabelStyle(FontSize: 14, TextColor: #F6F7F9, RenderBold: true, Wrap: true, VerticalAlignment: Center);
+@EntryTitle1 = LabelStyle(FontSize: 14, TextColor: #F6F7F9, RenderBold: true, VerticalAlignment: Center);
+@OptLabel    = LabelStyle(FontSize: 13, TextColor: #F6F7F9, VerticalAlignment: Center);
+@FieldLabel  = LabelStyle(FontSize: 11, TextColor: #BEC1CF, RenderUppercase: true, LetterSpacing: 1, VerticalAlignment: Center);
+@InfoKey     = LabelStyle(FontSize: 11, TextColor: #6A7A8A, RenderUppercase: true, LetterSpacing: 0.5, VerticalAlignment: Center);
+@InfoVal     = LabelStyle(FontSize: 13, TextColor: #F6F7F9, VerticalAlignment: Center);
+@Note        = LabelStyle(FontSize: 11, TextColor: #6A7A8A, VerticalAlignment: Center, Wrap: true);
+@CenterNote  = LabelStyle(FontSize: 11, TextColor: #6A7A8A, HorizontalAlignment: Center, VerticalAlignment: Center, Wrap: true);
+@Dim         = LabelStyle(FontSize: 12, TextColor: #6A7A8A, HorizontalAlignment: Center, VerticalAlignment: Center);
+@Subtitle    = LabelStyle(FontSize: 12, TextColor: #BEC1CF, HorizontalAlignment: Center, VerticalAlignment: Center, Wrap: true);
+@Context     = LabelStyle(FontSize: 13, TextColor: #BEC1CF, HorizontalAlignment: Center, VerticalAlignment: Center, Wrap: true);
+@Question    = LabelStyle(FontSize: 16, TextColor: #FFC233, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center, Wrap: true);
+@Feedback    = LabelStyle(FontSize: 12, TextColor: #FFC233, HorizontalAlignment: Center, VerticalAlignment: Center, Wrap: true);
+@FeedbackLeft = LabelStyle(FontSize: 12, TextColor: #FFC233, VerticalAlignment: Center, Wrap: true);
+@Gold        = LabelStyle(FontSize: 13, TextColor: #FFC233, RenderBold: true, VerticalAlignment: Center);
+@GoldEnd     = LabelStyle(FontSize: 13, TextColor: #FFC233, RenderBold: true, HorizontalAlignment: End, VerticalAlignment: Center);
+@Key         = LabelStyle(FontSize: 13, TextColor: #FFC233, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center);
+@GoldBig     = LabelStyle(FontSize: 30, TextColor: #FFC233, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center);
+@GoldName    = LabelStyle(FontSize: 18, TextColor: #FFC233, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center);
+@NameBig     = LabelStyle(FontSize: 22, TextColor: #F6F7F9, RenderBold: true, VerticalAlignment: Center);
+@StatBig     = LabelStyle(FontSize: 20, TextColor: #F6F7F9, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center);
+@StatLab     = LabelStyle(FontSize: 11, TextColor: #6A7A8A, RenderUppercase: true, LetterSpacing: 1, HorizontalAlignment: Center, VerticalAlignment: Center);
+@Kpi         = LabelStyle(FontSize: 22, TextColor: #FFC233, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center);
+@KpiLabel    = LabelStyle(FontSize: 11, TextColor: #BEC1CF, RenderUppercase: true, LetterSpacing: 1, HorizontalAlignment: Center, VerticalAlignment: Center);
+@Pos         = LabelStyle(FontSize: 12, TextColor: #6A7A8A, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center);
+@Oro         = LabelStyle(FontSize: 13, TextColor: #FFD700, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center);
+@Plata       = LabelStyle(FontSize: 13, TextColor: #C0C0C0, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center);
+@Bronce      = LabelStyle(FontSize: 13, TextColor: #CD7F32, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center);
+@Ok          = LabelStyle(FontSize: 11, TextColor: #17CF73, RenderBold: true, RenderUppercase: true, LetterSpacing: 0.5, HorizontalAlignment: Center, VerticalAlignment: Center);
+@Warn        = LabelStyle(FontSize: 11, TextColor: #F99406, RenderBold: true, RenderUppercase: true, LetterSpacing: 0.5, HorizontalAlignment: Center, VerticalAlignment: Center);
+@Pend        = LabelStyle(FontSize: 11, TextColor: #6A7A8A, RenderBold: true, RenderUppercase: true, LetterSpacing: 0.5, HorizontalAlignment: Center, VerticalAlignment: Center);
+@Star        = LabelStyle(FontSize: 11, TextColor: #FFC233, RenderBold: true, RenderUppercase: true, HorizontalAlignment: End, VerticalAlignment: Center);
+@BadgeTxt    = LabelStyle(FontSize: 11, TextColor: #131A25, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center);
+@AvatarInitial = LabelStyle(FontSize: 17, TextColor: #131A25, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center);
+@BigInitial  = LabelStyle(FontSize: 40, TextColor: #131A25, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center);
+@MsgPlayer   = LabelStyle(FontSize: 12, TextColor: #78B4FF, RenderBold: true, VerticalAlignment: Center);
+// Columnas flotantes
+@FloatHead = LabelStyle(FontSize: 11, TextColor: #FFC233, RenderBold: true, RenderUppercase: true, LetterSpacing: 0.6, HorizontalAlignment: Center, VerticalAlignment: Center);
+@FloatCd   = LabelStyle(FontSize: 11, TextColor: #FFC233, HorizontalAlignment: Center, VerticalAlignment: Center);
+@FloatOk   = LabelStyle(FontSize: 11, TextColor: #17CF73, HorizontalAlignment: Center, VerticalAlignment: Center);
+@FloatLock = LabelStyle(FontSize: 11, TextColor: #6A7A8A, HorizontalAlignment: Center, VerticalAlignment: Center);
+
+// Botones (todos con sonido)
+@GoldBtn = TextButtonStyle(
+  Default: (Background: (Color: #3A2E12), LabelStyle: (FontSize: 13, TextColor: #FFC233, RenderBold: true, RenderUppercase: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+  Hovered: (Background: (Color: #4A3B18), LabelStyle: (FontSize: 13, TextColor: #FFE39A, RenderBold: true, RenderUppercase: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+  Pressed: (Background: (Color: #2B2210), LabelStyle: (FontSize: 13, TextColor: #FFC233, RenderBold: true, RenderUppercase: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+  Sounds: $C.@ButtonSounds
+);
+@NavBtn = TextButtonStyle(
+  Default: (Background: (Color: #202B3C), LabelStyle: (FontSize: 12, TextColor: #F6F7F9, HorizontalAlignment: Center, VerticalAlignment: Center)),
+  Hovered: (Background: (Color: #2B384D), LabelStyle: (FontSize: 12, TextColor: #FFC233, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+  Pressed: (Background: (Color: #18222F), LabelStyle: (FontSize: 12, TextColor: #F6F7F9, HorizontalAlignment: Center, VerticalAlignment: Center)),
+  Sounds: $C.@ButtonSounds
+);
+@GhostBtn = TextButtonStyle(
+  Default: (Background: (Color: #18222F), LabelStyle: (FontSize: 12, TextColor: #BEC1CF, HorizontalAlignment: Center, VerticalAlignment: Center)),
+  Hovered: (Background: (Color: #2B384D), LabelStyle: (FontSize: 12, TextColor: #F6F7F9, HorizontalAlignment: Center, VerticalAlignment: Center)),
+  Pressed: (Background: (Color: #131A25), LabelStyle: (FontSize: 12, TextColor: #BEC1CF, HorizontalAlignment: Center, VerticalAlignment: Center)),
+  Sounds: $C.@ButtonSounds
+);
+@DelBtn = TextButtonStyle(
+  Default: (Background: (Color: #202B3C), LabelStyle: (FontSize: 11, TextColor: #F04251, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+  Hovered: (Background: (Color: #3A2030), LabelStyle: (FontSize: 11, TextColor: #F6F7F9, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+  Pressed: (Background: (Color: #18222F), LabelStyle: (FontSize: 11, TextColor: #F04251, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+  Sounds: $C.@ButtonSounds
+);
+@OptBtn = TextButtonStyle(
+  Default: (Background: (Color: #202B3C), LabelStyle: (FontSize: 13, TextColor: #F6F7F9, HorizontalAlignment: Center, VerticalAlignment: Center)),
+  Hovered: (Background: (Color: #2B384D), LabelStyle: (FontSize: 13, TextColor: #FFC233, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+  Pressed: (Background: (Color: #18222F), LabelStyle: (FontSize: 13, TextColor: #F6F7F9, HorizontalAlignment: Center, VerticalAlignment: Center)),
+  Sounds: $C.@ButtonSounds
+);
+@Toggle = TextButtonStyle(
+  Default: (Background: (Color: #202B3C), LabelStyle: (FontSize: 13, TextColor: #F6F7F9, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+  Hovered: (Background: (Color: #2B384D), LabelStyle: (FontSize: 13, TextColor: #FFC233, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+  Pressed: (Background: (Color: #18222F), LabelStyle: (FontSize: 13, TextColor: #F6F7F9, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+  Sounds: $C.@ButtonSounds
+);
+@TabBtn = TextButtonStyle(
+  Default: (Background: (Color: #18222F), LabelStyle: (FontSize: 12, TextColor: #BEC1CF, HorizontalAlignment: Center, VerticalAlignment: Center)),
+  Hovered: (Background: (Color: #202B3C), LabelStyle: (FontSize: 12, TextColor: #F6F7F9, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+  Pressed: (Background: (Color: #131A25), LabelStyle: (FontSize: 12, TextColor: #FFC233, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+  Sounds: $C.@ButtonSounds
+);
+@NavItem = TextButtonStyle(
+  Default: (Background: (Color: #131A25), LabelStyle: (FontSize: 13, TextColor: #BEC1CF, HorizontalAlignment: Start, VerticalAlignment: Center)),
+  Hovered: (Background: (Color: #18222F), LabelStyle: (FontSize: 13, TextColor: #F6F7F9, HorizontalAlignment: Start, VerticalAlignment: Center)),
+  Pressed: (Background: (Color: #202B3C), LabelStyle: (FontSize: 13, TextColor: #FFC233, RenderBold: true, HorizontalAlignment: Start, VerticalAlignment: Center)),
+  Sounds: $C.@ButtonSounds
+);
+@LikeBtn = TextButtonStyle(
+  Default: (Background: (Color: #202B3C), LabelStyle: (FontSize: 12, TextColor: #FF8FA3, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+  Hovered: (Background: (Color: #3A2030), LabelStyle: (FontSize: 12, TextColor: #FFB3C1, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+  Pressed: (Background: (Color: #18222F), LabelStyle: (FontSize: 12, TextColor: #FF8FA3, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+  Sounds: $C.@ButtonSounds
+);
+@TinyLink = TextButtonStyle(
+  Default: (Background: (Color: #18222F), LabelStyle: (FontSize: 11, TextColor: #6A7A8A, HorizontalAlignment: Center, VerticalAlignment: Center)),
+  Hovered: (Background: (Color: #202B3C), LabelStyle: (FontSize: 11, TextColor: #F04251, HorizontalAlignment: Center, VerticalAlignment: Center)),
+  Pressed: (Background: (Color: #131A25), LabelStyle: (FontSize: 11, TextColor: #F04251, HorizontalAlignment: Center, VerticalAlignment: Center)),
+  Sounds: $C.@ButtonSounds
+);
+@FloatTab = TextButtonStyle(
+  Default: (Background: (Color: #18222F), LabelStyle: (FontSize: 11, TextColor: #BEC1CF, RenderBold: true, RenderUppercase: true, LetterSpacing: 0.5, HorizontalAlignment: Center, VerticalAlignment: Center)),
+  Hovered: (Background: (Color: #2B384D), LabelStyle: (FontSize: 11, TextColor: #F6F7F9, RenderBold: true, RenderUppercase: true, LetterSpacing: 0.5, HorizontalAlignment: Center, VerticalAlignment: Center)),
+  Pressed: (Background: (Color: #131A25), LabelStyle: (FontSize: 11, TextColor: #FFC233, RenderBold: true, RenderUppercase: true, LetterSpacing: 0.5, HorizontalAlignment: Center, VerticalAlignment: Center)),
+  Sounds: $C.@ButtonSounds
+);
+@FloatBtn = TextButtonStyle(
+  Default: (Background: (Color: #18222F), LabelStyle: (FontSize: 12, TextColor: #FFC233, RenderBold: true, RenderUppercase: true, LetterSpacing: 0.5, HorizontalAlignment: Center, VerticalAlignment: Center)),
+  Hovered: (Background: (Color: #2B384D), LabelStyle: (FontSize: 12, TextColor: #F6F7F9, RenderBold: true, RenderUppercase: true, LetterSpacing: 0.5, HorizontalAlignment: Center, VerticalAlignment: Center)),
+  Pressed: (Background: (Color: #131A25), LabelStyle: (FontSize: 12, TextColor: #FFC233, RenderBold: true, RenderUppercase: true, LetterSpacing: 0.5, HorizontalAlignment: Center, VerticalAlignment: Center)),
+  Sounds: $C.@ButtonSounds
+);
+// ===================== MYTALE TOKENS v1 END =====================
+
 $C.@PageOverlay {
 
   $C.@Container {
@@ -7,7 +135,7 @@ $C.@PageOverlay {
 
     #Title {
       Group {
-        $C.@Title {
+        $C.@Title #PanelTitle {
           @Text = "EASYHUNGER - CONFIG PANEL";
         }
       }
@@ -17,235 +145,133 @@ $C.@PageOverlay {
       LayoutMode: Top;
       Padding: (Horizontal: 16, Top: 8, Bottom: 16);
 
-      // Tab buttons (Foods / Drinks)
+      // Tab buttons (Foods / Drinks / Config), pestanas @TabBtn del sistema
       Group #TabRow {
         Anchor: (Height: 36, Bottom: 6);
         LayoutMode: Center;
 
-        $C.@TextButton #TabFoods {
+        TextButton #TabFoods {
+          Style: @TabBtn;
           Text: "FOODS";
           Anchor: (Width: 120, Height: 30);
         }
 
         Group { Anchor: (Width: 12); }
 
-        $C.@TextButton #TabDrinks {
+        TextButton #TabDrinks {
+          Style: @TabBtn;
           Text: "DRINKS";
           Anchor: (Width: 120, Height: 30);
         }
 
         Group { Anchor: (Width: 12); }
 
-        $C.@TextButton #TabConfig {
+        TextButton #TabConfig {
+          Style: @TabBtn;
           Text: "CONFIG";
           Anchor: (Width: 120, Height: 30);
         }
       }
 
-      // Category filter row
+      // Category filter row, chips @NavBtn del sistema (el Java oculta los que no aplican)
       Group #CategoryRow {
         Anchor: (Height: 32, Bottom: 6);
         LayoutMode: Left;
 
-        Label {
+        Label #FilterLabel {
           Text: "FILTER:";
-          Style: (FontSize: 10, TextColor: #878e9c, RenderUppercase: true, VerticalAlignment: Center);
+          Style: @MetaMuted;
           Anchor: (Right: 8, Vertical: 0);
         }
 
         TextButton #CatAll {
+          Style: @NavBtn;
           Text: "ALL";
           Anchor: (Width: 45, Height: 24, Vertical: 0, Right: 4);
-          Background: (Color: #1e2d3d);
-          OutlineColor: #3a4a5a;
-          OutlineSize: 1;
-          Style: TextButtonStyle(
-            Default: (LabelStyle: (FontSize: 9, TextColor: #8899aa, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-            Hovered: (LabelStyle: (FontSize: 9, TextColor: #aabbcc, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-            Disabled: (Background: (Color: #2a4a6a), LabelStyle: (FontSize: 9, TextColor: #88ccff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
-          );
         }
 
         TextButton #CatVanilla {
+          Style: @NavBtn;
           Text: "VANILLA";
           Anchor: (Width: 65, Height: 24, Vertical: 0, Right: 4);
-          Background: (Color: #1e2d3d);
-          OutlineColor: #3a4a5a;
-          OutlineSize: 1;
-          Style: TextButtonStyle(
-            Default: (LabelStyle: (FontSize: 9, TextColor: #8899aa, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-            Hovered: (LabelStyle: (FontSize: 9, TextColor: #aabbcc, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-            Disabled: (Background: (Color: #2a4a6a), LabelStyle: (FontSize: 9, TextColor: #88ccff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
-          );
         }
 
         TextButton #CatNoCube {
+          Style: @NavBtn;
           Text: "NOCUBE";
           Anchor: (Width: 65, Height: 24, Vertical: 0, Right: 4);
-          Background: (Color: #1e2d3d);
-          OutlineColor: #3a4a5a;
-          OutlineSize: 1;
-          Style: TextButtonStyle(
-            Default: (LabelStyle: (FontSize: 9, TextColor: #8899aa, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-            Hovered: (LabelStyle: (FontSize: 9, TextColor: #aabbcc, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-            Disabled: (Background: (Color: #2a4a6a), LabelStyle: (FontSize: 9, TextColor: #88ccff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
-          );
         }
 
         TextButton #CatSnip3 {
+          Style: @NavBtn;
           Text: "SNIP3";
           Anchor: (Width: 55, Height: 24, Vertical: 0, Right: 4);
-          Background: (Color: #1e2d3d);
-          OutlineColor: #3a4a5a;
-          OutlineSize: 1;
-          Style: TextButtonStyle(
-            Default: (LabelStyle: (FontSize: 9, TextColor: #8899aa, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-            Hovered: (LabelStyle: (FontSize: 9, TextColor: #aabbcc, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-            Disabled: (Background: (Color: #2a4a6a), LabelStyle: (FontSize: 9, TextColor: #88ccff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
-          );
         }
 
         TextButton #CatHiddens {
+          Style: @NavBtn;
           Text: "HIDDENS";
           Anchor: (Width: 65, Height: 24, Vertical: 0, Right: 4);
-          Background: (Color: #1e2d3d);
-          OutlineColor: #3a4a5a;
-          OutlineSize: 1;
-          Style: TextButtonStyle(
-            Default: (LabelStyle: (FontSize: 9, TextColor: #8899aa, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-            Hovered: (LabelStyle: (FontSize: 9, TextColor: #aabbcc, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-            Disabled: (Background: (Color: #2a4a6a), LabelStyle: (FontSize: 9, TextColor: #88ccff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
-          );
         }
 
         TextButton #CatGalore {
+          Style: @NavBtn;
           Text: "GALORE";
           Anchor: (Width: 60, Height: 24, Vertical: 0, Right: 4);
-          Background: (Color: #1e2d3d);
-          OutlineColor: #3a4a5a;
-          OutlineSize: 1;
-          Style: TextButtonStyle(
-            Default: (LabelStyle: (FontSize: 9, TextColor: #8899aa, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-            Hovered: (LabelStyle: (FontSize: 9, TextColor: #aabbcc, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-            Disabled: (Background: (Color: #2a4a6a), LabelStyle: (FontSize: 9, TextColor: #88ccff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
-          );
         }
 
         TextButton #CatAle {
+          Style: @NavBtn;
           Text: "ALE";
           Anchor: (Width: 45, Height: 24, Vertical: 0, Right: 4);
-          Background: (Color: #1e2d3d);
-          OutlineColor: #3a4a5a;
-          OutlineSize: 1;
-          Style: TextButtonStyle(
-            Default: (LabelStyle: (FontSize: 9, TextColor: #8899aa, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-            Hovered: (LabelStyle: (FontSize: 9, TextColor: #aabbcc, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-            Disabled: (Background: (Color: #2a4a6a), LabelStyle: (FontSize: 9, TextColor: #88ccff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
-          );
         }
 
         TextButton #CatCheff {
+          Style: @NavBtn;
           Text: "CHEFF";
           Anchor: (Width: 55, Height: 24, Vertical: 0, Right: 4);
-          Background: (Color: #1e2d3d);
-          OutlineColor: #3a4a5a;
-          OutlineSize: 1;
-          Style: TextButtonStyle(
-            Default: (LabelStyle: (FontSize: 9, TextColor: #8899aa, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-            Hovered: (LabelStyle: (FontSize: 9, TextColor: #aabbcc, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-            Disabled: (Background: (Color: #2a4a6a), LabelStyle: (FontSize: 9, TextColor: #88ccff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
-          );
         }
 
         TextButton #CatConnor {
+          Style: @NavBtn;
           Text: "CONNOR";
           Anchor: (Width: 60, Height: 24, Vertical: 0, Right: 4);
-          Background: (Color: #1e2d3d);
-          OutlineColor: #3a4a5a;
-          OutlineSize: 1;
-          Style: TextButtonStyle(
-            Default: (LabelStyle: (FontSize: 9, TextColor: #8899aa, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-            Hovered: (LabelStyle: (FontSize: 9, TextColor: #aabbcc, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-            Disabled: (Background: (Color: #2a4a6a), LabelStyle: (FontSize: 9, TextColor: #88ccff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
-          );
         }
 
         TextButton #CatCaba {
+          Style: @NavBtn;
           Text: "CABA";
           Anchor: (Width: 45, Height: 24, Vertical: 0, Right: 4);
-          Background: (Color: #1e2d3d);
-          OutlineColor: #3a4a5a;
-          OutlineSize: 1;
-          Style: TextButtonStyle(
-            Default: (LabelStyle: (FontSize: 9, TextColor: #8899aa, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-            Hovered: (LabelStyle: (FontSize: 9, TextColor: #aabbcc, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-            Disabled: (Background: (Color: #2a4a6a), LabelStyle: (FontSize: 9, TextColor: #88ccff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
-          );
         }
 
         TextButton #CatZcGaia {
+          Style: @NavBtn;
           Text: "ZC GAIA";
           Anchor: (Width: 60, Height: 24, Vertical: 0, Right: 4);
-          Background: (Color: #1e2d3d);
-          OutlineColor: #3a4a5a;
-          OutlineSize: 1;
-          Style: TextButtonStyle(
-            Default: (LabelStyle: (FontSize: 9, TextColor: #8899aa, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-            Hovered: (LabelStyle: (FontSize: 9, TextColor: #aabbcc, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-            Disabled: (Background: (Color: #2a4a6a), LabelStyle: (FontSize: 9, TextColor: #88ccff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
-          );
         }
 
         TextButton #CatHatsuya {
+          Style: @NavBtn;
           Text: "HATSUYA";
           Anchor: (Width: 65, Height: 24, Vertical: 0, Right: 4);
-          Background: (Color: #1e2d3d);
-          OutlineColor: #3a4a5a;
-          OutlineSize: 1;
-          Style: TextButtonStyle(
-            Default: (LabelStyle: (FontSize: 9, TextColor: #8899aa, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-            Hovered: (LabelStyle: (FontSize: 9, TextColor: #aabbcc, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-            Disabled: (Background: (Color: #2a4a6a), LabelStyle: (FontSize: 9, TextColor: #88ccff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
-          );
         }
 
         TextButton #CatEndgame {
+          Style: @NavBtn;
           Text: "ENDGAME";
           Anchor: (Width: 65, Height: 24, Vertical: 0, Right: 4);
-          Background: (Color: #1e2d3d);
-          OutlineColor: #3a4a5a;
-          OutlineSize: 1;
-          Style: TextButtonStyle(
-            Default: (LabelStyle: (FontSize: 9, TextColor: #8899aa, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-            Hovered: (LabelStyle: (FontSize: 9, TextColor: #aabbcc, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-            Disabled: (Background: (Color: #2a4a6a), LabelStyle: (FontSize: 9, TextColor: #88ccff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
-          );
         }
 
         TextButton #CatSpice {
+          Style: @NavBtn;
           Text: "SOL";
           Anchor: (Width: 45, Height: 24, Vertical: 0, Right: 4);
-          Background: (Color: #1e2d3d);
-          OutlineColor: #3a4a5a;
-          OutlineSize: 1;
-          Style: TextButtonStyle(
-            Default: (LabelStyle: (FontSize: 9, TextColor: #8899aa, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-            Hovered: (LabelStyle: (FontSize: 9, TextColor: #aabbcc, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-            Disabled: (Background: (Color: #2a4a6a), LabelStyle: (FontSize: 9, TextColor: #88ccff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
-          );
         }
 
         TextButton #CatOther {
+          Style: @NavBtn;
           Text: "OTHER";
           Anchor: (Width: 55, Height: 24, Vertical: 0);
-          Background: (Color: #1e2d3d);
-          OutlineColor: #3a4a5a;
-          OutlineSize: 1;
-          Style: TextButtonStyle(
-            Default: (LabelStyle: (FontSize: 9, TextColor: #8899aa, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-            Hovered: (LabelStyle: (FontSize: 9, TextColor: #aabbcc, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-            Disabled: (Background: (Color: #2a4a6a), LabelStyle: (FontSize: 9, TextColor: #88ccff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
-          );
         }
       }
 
@@ -254,9 +280,9 @@ $C.@PageOverlay {
         Anchor: (Height: 30, Bottom: 6);
         LayoutMode: Left;
 
-        Label {
+        Label #SearchLabel {
           Text: "Search:";
-          Style: (FontSize: 11, TextColor: #96a9be, VerticalAlignment: Center);
+          Style: @MetaMuted;
           Anchor: (Width: 55, Vertical: 0);
         }
 
@@ -267,7 +293,8 @@ $C.@PageOverlay {
 
         Group { Anchor: (Width: 8); }
 
-        $C.@TextButton #SearchButton {
+        TextButton #SearchButton {
+          Style: @NavBtn;
           Text: "SEARCH";
           Anchor: (Width: 130, Height: 26);
         }
@@ -276,60 +303,64 @@ $C.@PageOverlay {
       // Total count label
       Label #TotalLabel {
         Text: "Total: 0 items";
-        Style: (FontSize: 11, TextColor: #96a9be);
+        Style: @MetaMuted;
         Anchor: (Height: 18, Bottom: 4);
       }
 
-      // Column Headers
+      // Column Headers (cabecera con etiquetas de dato @InfoKey)
       Group #ColumnHeaders {
         Anchor: (Height: 24, Bottom: 3);
         LayoutMode: Left;
-        Background: (Color: #2d3548);
+        Background: (Color: #18222F);
         Padding: (Horizontal: 12);
 
         // Spacer for icon
         Group { Anchor: (Width: 40); }
 
-        Label {
+        Label #ColNameLabel {
           Text: "Item Name";
-          Style: (FontSize: 11, RenderBold: true, TextColor: #96a9be, VerticalAlignment: Center);
+          Style: @InfoKey;
           Anchor: (Width: 280);
         }
 
         Label { FlexWeight: 1; }
 
-        Label {
+        Label #ColValueLabel {
           Text: "Value";
-          Style: (FontSize: 11, RenderBold: true, TextColor: #96a9be, VerticalAlignment: Center, HorizontalAlignment: Center);
+          Style: @InfoKey;
           Anchor: (Width: 70);
         }
       }
 
-      // Item List (scrollable) - hidden when config tab is active
+      // Item List (scrollable, pozo del sistema) - hidden when config tab is active
       Group #ItemList {
         Anchor: (Height: 320, Bottom: 10);
         LayoutMode: TopScrolling;
-        Background: (Color: #0a0f17(0.5));
+        Background: (Color: #131A25);
         Padding: (Full: 5);
         ScrollbarStyle: $C.@DefaultScrollbarStyle;
       }
 
-      // Config List (scrollable) - visible when config tab is active
+      // Config List (scrollable, pozo del sistema) - visible when config tab is active
+      // En CONFIG solo se ven #TabRow (42) y esta lista. #Content mide 920 - 38
+      // de titulo - 8 - 16 de padding = 858, y quedan 816. Con 790 + 10 caben
+      // unas 20 filas de 38 (ConfigEntry 34 + 4).
       Group #ConfigList {
-        Anchor: (Height: 530, Bottom: 10);
+        Anchor: (Height: 790, Bottom: 10);
         LayoutMode: TopScrolling;
-        Background: (Color: #0a0f17(0.5));
+        Background: (Color: #131A25);
         Padding: (Full: 5);
         ScrollbarStyle: $C.@DefaultScrollbarStyle;
         Visible: false;
       }
 
-      // Add Item Section
+      // Add Item Section (separador)
       Group #AddSection {
         Anchor: (Height: 1, Bottom: 8);
-        Background: #2b3542;
+        Background: #2B384D;
       }
 
+      // Add row. ADD es la accion principal de la pantalla, el unico @GoldBtn
       Group #AddRow {
         Anchor: (Height: 32);
         LayoutMode: Center;
@@ -348,7 +379,8 @@ $C.@PageOverlay {
 
         Group { Anchor: (Width: 8); }
 
-        $C.@TextButton #AddButton {
+        TextButton #AddButton {
+          Style: @GoldBtn;
           Text: "ADD";
           Anchor: (Width: 100, Height: 26);
         }
@@ -361,7 +393,7 @@ $C.@PageOverlay {
 
         Label #InventoryTitle {
           Text: "YOUR INVENTORY (click to fill Item ID)";
-          Style: (FontSize: 10, TextColor: #666666, LetterSpacing: 1, HorizontalAlignment: Center);
+          Style: @StatLab;
           Anchor: (Height: 18, Bottom: 8);
         }
 
@@ -394,12 +426,12 @@ $C.@PageOverlay {
 
         Group {
           Anchor: (Height: 1, Horizontal: 20);
-          Background: (Color: #3a4a6a);
+          Background: (Color: #2B384D);
         }
 
-        Label {
+        Label #HotbarTitle {
           Text: "HOTBAR";
-          Style: (FontSize: 10, TextColor: #666666, LetterSpacing: 1, HorizontalAlignment: Center);
+          Style: @StatLab;
           Anchor: (Height: 18, Bottom: 4);
         }
 
@@ -413,9 +445,10 @@ $C.@PageOverlay {
           }
         }
 
+        // Verde de exito, sin mayusculas para que el ID del item se lea tal cual
         Label #InventoryFeedback {
           Text: "";
-          Style: (FontSize: 11, TextColor: #4ade80, HorizontalAlignment: Center);
+          Style: @FloatOk;
           Anchor: (Height: 18, Top: 6);
         }
       }

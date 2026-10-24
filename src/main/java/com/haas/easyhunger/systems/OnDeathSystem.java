@@ -9,6 +9,7 @@ import com.hypixel.hytale.server.core.modules.entity.damage.DeathSystems;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.haas.easyhunger.EasyHungerUtils;
+import com.haas.easyhunger.utils.WorldGate;
 import com.haas.easyhunger.components.HungerComponent;
 import com.haas.easyhunger.ui.EasyHungerHud;
 import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
@@ -41,6 +42,10 @@ public class OnDeathSystem extends DeathSystems.OnDeathSystem {
 
     @Override
     public void onComponentRemoved(@NonNullDecl Ref<EntityStore> ref, @NonNullDecl DeathComponent component, @NonNullDecl Store<EntityStore> store, @NonNullDecl CommandBuffer<EntityStore> commandBuffer) {
+        // Mundo excluido: morir alli NO rellena las barras. Si rellenara, el lobby seria una
+        // recarga gratis y se cargaria la regla de "el estado se congela".
+        if (!WorldGate.isActive(store)) return;
+
         EasyHungerUtils.setPlayerHungerLevel(ref, store, EasyHunger.get().getConfig().getMaxHunger());
         
         // Reset Thirst

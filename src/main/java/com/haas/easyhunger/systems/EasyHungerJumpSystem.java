@@ -3,6 +3,7 @@ package com.haas.easyhunger.systems;
 import com.haas.easyhunger.EasyHunger;
 import com.haas.easyhunger.EasyHungerUtils;
 import com.haas.easyhunger.components.HungerComponent;
+import com.haas.easyhunger.components.PlayerActionTimes;
 import com.hypixel.hytale.component.ArchetypeChunk;
 import com.hypixel.hytale.component.CommandBuffer;
 import com.hypixel.hytale.component.Store;
@@ -14,10 +15,9 @@ import com.hypixel.hytale.server.core.entity.movement.MovementStatesComponent;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.haas.easyhunger.utils.HungerProtectionUtils;
+import com.haas.easyhunger.utils.WorldGate;
 import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
 
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * System that decreases hunger when a player jumps.
@@ -25,11 +25,11 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class EasyHungerJumpSystem extends EntityTickingSystem<EntityStore> {
 
-    // Track when players last jumped (to prevent draining every tick while in air)
-    private final java.util.Map<UUID, Long> lastJumpTime = new ConcurrentHashMap<>();
-    
-    // Minimum time between jump hunger costs (in milliseconds)
-    private static final long JUMP_COOLDOWN_MS = 500; // 0.5 seconds
+    // El timestamp del ultimo salto vive en PlayerActionTimes, un componente de la entidad.
+    // Antes era un `static Map<UUID, Long>` que crecia con cada jugador y habia que limpiar a
+    // mano en PlayerDisconnect — y ese listener no se dispara al cambiar de mundo.
+
+    // Cooldown entre saltos que cuestan hambre: PlayerActionTimes.JUMP_COOLDOWN_MS (0,5 s).
 
     public EasyHungerJumpSystem() {
     }
@@ -47,6 +47,9 @@ public class EasyHungerJumpSystem extends EntityTickingSystem<EntityStore> {
             @NonNullDecl Store<EntityStore> store,
             @NonNullDecl CommandBuffer<EntityStore> commandBuffer
     ) {
+        // Mundo excluido: saltar en el lobby no cuesta hambre.
+        if (!WorldGate.isActive(store)) return;
+
         MovementStatesComponent movementComp = chunk.getComponent(index, MovementStatesComponent.getComponentType());
         if (movementComp == null) return;
 
@@ -65,14 +68,13 @@ public class EasyHungerJumpSystem extends EntityTickingSystem<EntityStore> {
             // Skip hunger drain in safe zones
             if (HungerProtectionUtils.isSafe(playerRef)) return;
             
-            UUID uuid = playerRef.getUuid();
-            if (uuid == null) return;
+            PlayerActionTimes times = chunk.getComponent(index, PlayerActionTimes.getComponentType());
+            if (times == null) return;
 
             long currentTime = System.currentTimeMillis();
-            Long lastJump = lastJumpTime.get(uuid);
 
             // Only drain hunger if enough time has passed since last jump
-            if (lastJump == null || (currentTime - lastJump) >= JUMP_COOLDOWN_MS) {
+            if (times.lastHungerJump == 0L || (currentTime - times.lastHungerJump) >= PlayerActionTimes.JUMP_COOLDOWN_MS) {
                 float jumpCost = EasyHunger.get().getConfig().getJumpHungerCost();
                 if (jumpCost <= 0) return;
 
@@ -84,8 +86,8 @@ public class EasyHungerJumpSystem extends EntityTickingSystem<EntityStore> {
                    
                    // Update HUD
                    EasyHungerUtils.setPlayerHungerLevel(chunk.getReferenceTo(index), commandBuffer, newHunger);
-                   
-                   lastJumpTime.put(uuid, currentTime);
+
+                   times.lastHungerJump = currentTime;
                 }
             }
         }

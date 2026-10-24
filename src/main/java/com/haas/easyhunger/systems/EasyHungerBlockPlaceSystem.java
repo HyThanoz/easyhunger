@@ -1,6 +1,8 @@
 package com.haas.easyhunger.systems;
 
 import com.haas.easyhunger.EasyHunger;
+import com.haas.easyhunger.components.PlayerActionTimes;
+import com.haas.easyhunger.utils.WorldGate;
 import com.hypixel.hytale.component.ArchetypeChunk;
 import com.hypixel.hytale.component.CommandBuffer;
 import com.hypixel.hytale.component.Store;
@@ -13,13 +15,11 @@ import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 
 import javax.annotation.Nonnull;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class EasyHungerBlockPlaceSystem extends EntityEventSystem<EntityStore, PlaceBlockEvent> {
 
-    public static final Map<UUID, Long> LAST_PLACE_TIME = new ConcurrentHashMap<>();
+    // El timestamp vive en PlayerActionTimes (componente de la entidad). Antes era un
+    // `static Map<UUID, Long>` con limpieza manual en PlayerDisconnect.
 
     public EasyHungerBlockPlaceSystem() {
         super(PlaceBlockEvent.class);
@@ -37,6 +37,10 @@ public class EasyHungerBlockPlaceSystem extends EntityEventSystem<EntityStore, P
                        @Nonnull PlaceBlockEvent event) {
         
         if (event.isCancelled()) return;
+
+        // Mundo excluido: no se registra el timestamp de colocacion. Si se registrara, colocar un
+        // bloque de agua en el lobby afectaria a la deteccion de bebida al volver al mundo normal.
+        if (!WorldGate.isActive(store)) return;
 
         ItemStack item = event.getItemInHand();
         if (item == null) return;
@@ -62,7 +66,10 @@ public class EasyHungerBlockPlaceSystem extends EntityEventSystem<EntityStore, P
         Float foodValue = EasyHunger.get().getFoodsConfig().getFoodValue(itemId);
         
         if ((drinkValue != null && drinkValue > 0) || (foodValue != null && foodValue > 0)) {
-            LAST_PLACE_TIME.put(playerRef.getUuid(), System.currentTimeMillis());
+            PlayerActionTimes times = chunk.getComponent(index, PlayerActionTimes.getComponentType());
+            if (times != null) {
+                times.lastBlockPlace = System.currentTimeMillis();
+            }
         }
     }
 }

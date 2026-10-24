@@ -1,0 +1,41 @@
+// HUD de sed en BARRA (HudEstilo BARRAS, 1.5.20). Va encima de la stamina nativa y la copia en espejo
+// barra de 318 x 12 pegada a la derecha, 4 de aire e icono de 24 (StaminaPanel.ui del cliente 0.7.1).
+// El porque de la raiz centrada y de la altura esta en HungerBar.ui. Mismos ids que Water.ui.
+// 1.5.21 texturas volteadas, la punta inclinada va afuera como la barra nativa. Se llena desde el centro (Direction End
+// no esta en el catalogo de Common/UI de Assets.zip y validate-ui lo rechaza).
+// Solo ASCII. Sin dos puntos en los comentarios.
+
+Group #EasyWaterRoot {
+    Anchor: (Width: 702, Height: 24, Bottom: 142);
+
+    Group #EasyWaterContainer {
+        Anchor: (Left: 0, Top: 0, Width: 702, Height: 24);
+
+        Group {
+            Anchor: (Left: 356, Top: 8, Width: 318, Height: 12);
+            Background: "WaterBackground.png";
+
+            ProgressBar #EasyWaterPreviewBar {
+                Anchor: (Width: 318, Height: 12);
+                BarTexturePath: "WaterBarFillPreview.png";
+                Value: 0;
+            }
+
+            ProgressBar #EasyWaterThirstBar {
+                Anchor: (Width: 318, Height: 12);
+                BarTexturePath: "WaterBarFill.png";
+            }
+
+            ProgressBar #EasyWaterCreativeThirstBar {
+                Anchor: (Width: 318, Height: 12);
+                BarTexturePath: "WaterCreativeBarFill.png";
+                Visible: false;
+            }
+        }
+
+        Group #EasyWaterIcon {
+            Anchor: (Left: 678, Top: 0, Width: 24, Height: 24);
+            Background: "WaterIcon.png";
+        }
+    }
+}

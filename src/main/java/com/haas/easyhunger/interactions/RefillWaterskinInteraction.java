@@ -10,7 +10,7 @@ import com.hypixel.hytale.component.CommandBuffer;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.math.iterator.BlockIterator;
 import com.hypixel.hytale.math.util.ChunkUtil;
-import com.hypixel.hytale.math.vector.Vector3d;
+import org.joml.Vector3d;
 import com.hypixel.hytale.protocol.InteractionState;
 import com.hypixel.hytale.protocol.InteractionSyncData;
 import com.hypixel.hytale.protocol.InteractionType;
@@ -46,6 +46,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * If not looking at water, the interaction fails and allows fallback to drinking.
  */
 public class RefillWaterskinInteraction extends SimpleInstantInteraction {
+
+    /** Alcance fijo del rayo que busca agua desde los ojos, en bloques. */
+    private static final float REFILL_REACH_BLOCKS = 5.0f;
 
     // Allowed fluid IDs for refilling
     private String[] allowedFluids = new String[]{"Water_Source", "Water"};
@@ -97,6 +100,13 @@ public class RefillWaterskinInteraction extends SimpleInstantInteraction {
             World world = commandBuffer.getExternalData().getWorld();
             Ref<EntityStore> ref = context.getEntity();
 
+            // Mundo excluido: el odre no se llena. Aqui si es Failed — a diferencia de comer o
+            // beber, rellenar no consume nada, asi que fallar deja al jugador como estaba.
+            if (!com.haas.easyhunger.utils.WorldGate.isActive(world)) {
+                state.state = InteractionState.Failed;
+                return;
+            }
+
             // Don't refill if targeting an entity
             if (context.getTargetEntity() != null) {
                 state.state = InteractionState.Failed;
@@ -139,14 +149,14 @@ public class RefillWaterskinInteraction extends SimpleInstantInteraction {
                 return;
             }
 
-            // Use fixed distance (typical interaction distance)
-            float distance = 5.0f;
+            float distance = REFILL_REACH_BLOCKS;
 
             // Calculate ray from player's eye position in look direction
-            Vector3d fromPos = transformComponent.getPosition().clone();
+            Vector3d fromPos = new Vector3d(transformComponent.getPosition());
             fromPos.y += (double) modelComponent.getModel().getEyeHeight(ref, commandBuffer);
             Vector3d lookDir = headRotationComponent.getDirection();
-            Vector3d toPos = fromPos.clone().add(lookDir.scale(distance));
+            // JOML mutates in place, so copy before scaling/adding to avoid altering the originals
+            Vector3d toPos = new Vector3d(fromPos).add(new Vector3d(lookDir).mul(distance));
 
             AtomicBoolean refilled = new AtomicBoolean(false);
 
@@ -215,7 +225,7 @@ public class RefillWaterskinInteraction extends SimpleInstantInteraction {
             }
 
         } catch (Exception e) {
-            EasyHunger.logInfo("REFILL WATERSKIN ERROR: " + e.toString());
+            EasyHunger.LOGGER.at(java.util.logging.Level.WARNING).withCause(e).log("REFILL WATERSKIN ERROR");
             context.getState().state = InteractionState.Failed;
         }
     }

@@ -17,15 +17,20 @@ import com.hypixel.hytale.server.core.ui.builder.UIEventBuilder;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hypixel.hytale.server.core.asset.type.item.config.Item;
-import com.hypixel.hytale.server.core.inventory.Inventory;
+import com.hypixel.hytale.server.core.inventory.InventoryComponent;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.inventory.container.ItemContainer;
 import com.haas.easyhunger.EasyHunger;
+import com.haas.easyhunger.config.EasyHungerConfig;
+import com.haas.easyhunger.utils.Lang;
+import com.haas.easyhunger.utils.Msg;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -38,6 +43,8 @@ public class EasyHungerValuesPage extends InteractiveCustomUIPage<EasyHungerValu
     private String searchQuery = "";
     private String category = "all"; // all, vanilla, nocube, ale, cheff, other
     private final List<String> itemIds = new ArrayList<>();
+    /** Ultimo valor mostrado o aplicado por clave de la pestana Config (ver handleSetConfig). */
+    private final Map<String, String> shownConfigValues = new HashMap<>();
 
     public static class ConfigEventData {
         public String action;
@@ -82,6 +89,29 @@ public class EasyHungerValuesPage extends InteractiveCustomUIPage<EasyHungerValu
 
         String language = playerRef.getLanguage();
 
+        // Textos fijos del .ui en el idioma del jugador (Lang), sobre los mismos id ya declarados
+        // (TextButton y Label). El texto del .ui queda de respaldo; en espanol sale el mismo.
+        UUID uuid = playerRef.getUuid();
+        cmd.set("#TabFoods.Text", Lang.t(uuid, "panel.tab_comidas"));
+        cmd.set("#TabDrinks.Text", Lang.t(uuid, "panel.tab_bebidas"));
+        cmd.set("#TabConfig.Text", Lang.t(uuid, "panel.tab_config"));
+        cmd.set("#CatAll.Text", Lang.t(uuid, "panel.cat_todo"));
+        cmd.set("#CatOther.Text", Lang.t(uuid, "panel.cat_otros"));
+        cmd.set("#SearchButton.Text", Lang.t(uuid, "panel.btn_buscar"));
+        cmd.set("#AddButton.Text", Lang.t(uuid, "panel.btn_agregar"));
+        cmd.set("#InventoryTitle.Text", Lang.t(uuid, "panel.inventario"));
+        // Ids nuevos en 1.5.18 (Label, y el Label de la plantilla $C.@Title, como #PageTitle de
+        // Fixtale). Los PlaceholderText van sobre TextField ya declarados, como #WikiSearchField
+        // de la Wiki.
+        cmd.set("#PanelTitle.Text", Lang.t(uuid, "panel.titulo"));
+        cmd.set("#FilterLabel.Text", Lang.t(uuid, "panel.filtro"));
+        cmd.set("#SearchLabel.Text", Lang.t(uuid, "panel.buscar_etiqueta"));
+        cmd.set("#SearchInput.PlaceholderText", Lang.t(uuid, "panel.buscar_ayuda"));
+        cmd.set("#ColNameLabel.Text", Lang.t(uuid, "panel.col_nombre"));
+        cmd.set("#ColValueLabel.Text", Lang.t(uuid, "panel.col_valor"));
+        cmd.set("#NewItemId.PlaceholderText", Lang.t(uuid, "panel.id_ayuda"));
+        cmd.set("#HotbarTitle.Text", Lang.t(uuid, "panel.barra_rapida"));
+
         // Show/hide sections based on active tab
         boolean isConfigTab = activeTab.equals("config");
         cmd.set("#CategoryRow.Visible", !isConfigTab);
@@ -104,100 +134,32 @@ public class EasyHungerValuesPage extends InteractiveCustomUIPage<EasyHungerValu
         }
 
         // Render player inventory
-        Player player = store.getComponent(ref, Player.getComponentType());
-        if (player != null) {
-            renderInventory(cmd, evt, player);
-        }
+        renderInventory(cmd, evt, ref, store);
 
         Map<String, Float> allItems = activeTab.equals("foods") 
             ? EasyHunger.get().getFoodsConfig().getFoodValues()
             : EasyHunger.get().getDrinksConfig().getDrinkValues();
 
-        // Show/hide category buttons based on installed mods
-        cmd.set("#CatVanilla.Visible", hasCategoryItems("vanilla", allItems));
-        cmd.set("#CatNoCube.Visible", hasCategoryItems("nocube", allItems));
-        cmd.set("#CatSnip3.Visible", hasCategoryItems("snip3", allItems));
-        cmd.set("#CatHiddens.Visible", hasCategoryItems("hiddens", allItems));
-        cmd.set("#CatGalore.Visible", hasCategoryItems("galore", allItems));
-        cmd.set("#CatConnor.Visible", hasCategoryItems("connor", allItems));
-        cmd.set("#CatCaba.Visible", hasCategoryItems("caba", allItems));
-        cmd.set("#CatZcGaia.Visible", hasCategoryItems("zcgaia", allItems));
-        cmd.set("#CatHatsuya.Visible", hasCategoryItems("hatsuya", allItems));
-        cmd.set("#CatEndgame.Visible", hasCategoryItems("endgame", allItems));
-        cmd.set("#CatSpice.Visible", hasCategoryItems("spice", allItems));
-        cmd.set("#CatAle.Visible", hasCategoryItems("ale", allItems));
-        cmd.set("#CatCheff.Visible", hasCategoryItems("cheff", allItems));
-        cmd.set("#CatOther.Visible", hasCategoryItems("other", allItems));
+        // Show/hide category buttons based on installed mods.
+        // La lista de instalados se calcula una vez (antes eran 2 busquedas de asset por item y
+        // por cada uno de los 14 botones).
+        List<String> installedIds = installedItemIds(allItems);
+        cmd.set("#CatVanilla.Visible", hasCategoryItems("vanilla", installedIds));
+        cmd.set("#CatNoCube.Visible", hasCategoryItems("nocube", installedIds));
+        cmd.set("#CatSnip3.Visible", hasCategoryItems("snip3", installedIds));
+        cmd.set("#CatHiddens.Visible", hasCategoryItems("hiddens", installedIds));
+        cmd.set("#CatGalore.Visible", hasCategoryItems("galore", installedIds));
+        cmd.set("#CatConnor.Visible", hasCategoryItems("connor", installedIds));
+        cmd.set("#CatCaba.Visible", hasCategoryItems("caba", installedIds));
+        cmd.set("#CatZcGaia.Visible", hasCategoryItems("zcgaia", installedIds));
+        cmd.set("#CatHatsuya.Visible", hasCategoryItems("hatsuya", installedIds));
+        cmd.set("#CatEndgame.Visible", hasCategoryItems("endgame", installedIds));
+        cmd.set("#CatSpice.Visible", hasCategoryItems("spice", installedIds));
+        cmd.set("#CatAle.Visible", hasCategoryItems("ale", installedIds));
+        cmd.set("#CatCheff.Visible", hasCategoryItems("cheff", installedIds));
+        cmd.set("#CatOther.Visible", hasCategoryItems("other", installedIds));
 
-        final String query = searchQuery.toLowerCase().trim();
-        
-        // Filter by:
-        // 1. Item exists in game (installed mods only) OR is from EasyHunger mod
-        // 2. Search query (searches both ID and display name)
-        // 3. Category filter
-        Map<String, Float> items = allItems.entrySet().stream()
-            .filter(e -> {
-                String itemId = e.getKey();
-                // Always show EasyHunger mod items (our own mod)
-                if (itemId.startsWith("EasyHunger_")) return true;
-                // Always show items that would be categorized as OTHER (custom entries)
-                if (ItemCategoryFilter.getCategory(itemId).equals("other")) return true;
-                // Check if item exists in game for other mods
-                Item item = (Item) Item.getAssetMap().getAsset(itemId);
-                if (item == null) item = (Item) Item.getAssetMap().getAsset("*" + itemId);
-                return item != null;
-            })
-            .filter(e -> {
-                if (query.isEmpty()) return true;
-                String id = e.getKey().toLowerCase();
-                String displayName = getDisplayName(e.getKey(), language).toLowerCase();
-                return id.contains(query) || displayName.contains(query);
-            })
-            .filter(e -> matchesCategory(e.getKey()))
-            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-
-        itemIds.clear();
-
-        int index = 0;
-        for (Map.Entry<String, Float> entry : items.entrySet()) {
-            String itemId = entry.getKey();
-            float value = entry.getValue();
-            
-            itemIds.add(itemId);
-            
-            String selector = "#ItemList[" + index + "]";
-            cmd.append("#ItemList", "Pages/ItemEntry.ui");
-            
-            // Set item icon - map EasyHunger config IDs to real item IDs
-            String iconId = getIconItemId(itemId);
-            cmd.set(selector + " #ItemIcon.ItemId", iconId);
-            
-            // Show display name with item ID in tooltip
-            String displayName = getDisplayName(itemId, language);
-            cmd.set(selector + " #ItemName.Text", displayName);
-            cmd.set(selector + " #ItemName.TooltipTextSpans", Message.raw(itemId));
-            cmd.set(selector + " #ValueInput.Value", formatValue(value));
-            
-            evt.addEventBinding(
-                CustomUIEventBindingType.ValueChanged,
-                selector + " #ValueInput",
-                new EventData()
-                    .append("Action", "setValue")
-                    .append("Index", String.valueOf(index))
-                    .append("@Value", selector + " #ValueInput.Value"),
-                false
-            );
-            
-            index++;
-        }
-
-        // Total label
-        String itemType = activeTab.equals("foods") ? "foods" : "drinks";
-        if (query.isEmpty() && category.equals("all")) {
-            cmd.set("#TotalLabel.Text", "Total: " + index + " " + itemType);
-        } else {
-            cmd.set("#TotalLabel.Text", "Showing: " + index + " of " + allItems.size() + " " + itemType);
-        }
+        renderItemList(cmd, evt, language, searchQuery.toLowerCase().trim(), allItems);
 
         // Bind tabs
         evt.addEventBinding(CustomUIEventBindingType.Activating, "#TabFoods", EventData.of("Action", "tab:foods"), false);
@@ -352,9 +314,11 @@ public class EasyHungerValuesPage extends InteractiveCustomUIPage<EasyHungerValu
             int slot = Integer.parseInt(data.action.substring(8));
             ItemStack stack;
             if (slot < 36) {
-                stack = player.getInventory().getStorage().getItemStack((short) slot);
+                InventoryComponent.Storage storageComp = store.getComponent(ref, InventoryComponent.Storage.getComponentType());
+                stack = storageComp != null ? storageComp.getInventory().getItemStack((short) slot) : null;
             } else {
-                stack = player.getInventory().getHotbar().getItemStack((short)(slot - 36));
+                InventoryComponent.Hotbar hotbarComp = store.getComponent(ref, InventoryComponent.Hotbar.getComponentType());
+                stack = hotbarComp != null ? hotbarComp.getInventory().getItemStack((short)(slot - 36)) : null;
             }
             if (stack != null && !stack.isEmpty()) {
                 UICommandBuilder cmd = new UICommandBuilder();
@@ -363,7 +327,7 @@ public class EasyHungerValuesPage extends InteractiveCustomUIPage<EasyHungerValu
                     itemId = itemId.substring(1);
                 }
                 cmd.set("#NewItemId.Value", itemId);
-                cmd.set("#InventoryFeedback.Text", "Selected: " + itemId);
+                cmd.set("#InventoryFeedback.Text", Lang.t(playerRef.getUuid(), "panel.seleccionado", "item", itemId));
                 sendUpdate(cmd, new UIEventBuilder(), false);
             }
         } else if (data.action.equals("setValue")) {
@@ -382,16 +346,32 @@ public class EasyHungerValuesPage extends InteractiveCustomUIPage<EasyHungerValu
         UIEventBuilder evt = new UIEventBuilder();
         
         String language = playerRef.getLanguage();
-        String query = searchQuery.toLowerCase();
-        
-        Map<String, Float> allItems = activeTab.equals("foods") 
+
+        Map<String, Float> allItems = activeTab.equals("foods")
             ? EasyHunger.get().getFoodsConfig().getFoodValues()
             : EasyHunger.get().getDrinksConfig().getDrinkValues();
-        
-        // Filter by:
-        // 1. Item exists in game (installed mods only)
-        // 2. Search query (searches both ID and display name)
-        // 3. Category filter
+
+        // Clear existing list container
+        cmd.clear("#ItemList");
+
+        // Aqui la busqueda no se recorta (sin trim), igual que antes.
+        renderItemList(cmd, evt, language, searchQuery.toLowerCase(), allItems);
+
+        sendUpdate(cmd, evt, false);
+    }
+
+    /**
+     * Filtra y pinta la lista de items y el contador. Lo comparten build() y updateItemList(),
+     * que antes lo tenian copiado casi linea a linea; la unica diferencia (el trim de la
+     * busqueda) la decide quien llama con {@code query}.
+     *
+     * Filter by:
+     * 1. Item exists in game (installed mods only) OR is from EasyHunger mod
+     * 2. Search query (searches both ID and display name)
+     * 3. Category filter
+     */
+    private void renderItemList(UICommandBuilder cmd, UIEventBuilder evt, String language,
+                                String query, Map<String, Float> allItems) {
         Map<String, Float> items = allItems.entrySet().stream()
             .filter(e -> {
                 String itemId = e.getKey();
@@ -412,31 +392,29 @@ public class EasyHungerValuesPage extends InteractiveCustomUIPage<EasyHungerValu
             })
             .filter(e -> matchesCategory(e.getKey()))
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-        
-        // Clear existing list container
-        cmd.clear("#ItemList");
-        
+
         itemIds.clear();
-        
+
         int index = 0;
         for (Map.Entry<String, Float> entry : items.entrySet()) {
             String itemId = entry.getKey();
             float value = entry.getValue();
-            
+
             itemIds.add(itemId);
-            
+
             String selector = "#ItemList[" + index + "]";
             cmd.append("#ItemList", "Pages/ItemEntry.ui");
-            
+
             // Set item icon - map EasyHunger config IDs to real item IDs
             String iconId = getIconItemId(itemId);
             cmd.set(selector + " #ItemIcon.ItemId", iconId);
-            
+
+            // Show display name with item ID in tooltip
             String displayName = getDisplayName(itemId, language);
             cmd.set(selector + " #ItemName.Text", displayName);
             cmd.set(selector + " #ItemName.TooltipTextSpans", Message.raw(itemId));
             cmd.set(selector + " #ValueInput.Value", formatValue(value));
-            
+
             evt.addEventBinding(
                 CustomUIEventBindingType.ValueChanged,
                 selector + " #ValueInput",
@@ -446,19 +424,20 @@ public class EasyHungerValuesPage extends InteractiveCustomUIPage<EasyHungerValu
                     .append("@Value", selector + " #ValueInput.Value"),
                 false
             );
-            
+
             index++;
         }
-        
-        // Update total label
-        String itemType = activeTab.equals("foods") ? "foods" : "drinks";
+
+        // Total label
+        boolean foods = activeTab.equals("foods");
+        UUID uuid = playerRef.getUuid();
         if (query.isEmpty() && category.equals("all")) {
-            cmd.set("#TotalLabel.Text", "Total: " + index + " " + itemType);
+            cmd.set("#TotalLabel.Text", Lang.t(uuid, foods ? "panel.total_comidas" : "panel.total_bebidas",
+                    "n", index));
         } else {
-            cmd.set("#TotalLabel.Text", "Showing: " + index + " of " + allItems.size() + " " + itemType);
+            cmd.set("#TotalLabel.Text", Lang.t(uuid, foods ? "panel.mostrando_comidas" : "panel.mostrando_bebidas",
+                    "n", index, "total", allItems.size()));
         }
-        
-        sendUpdate(cmd, evt, false);
     }
 
     /**
@@ -467,34 +446,50 @@ public class EasyHungerValuesPage extends InteractiveCustomUIPage<EasyHungerValu
     private void buildConfigSection(UICommandBuilder cmd, UIEventBuilder evt) {
         var config = EasyHunger.get().getConfig();
         
-        // Define all config entries: key, label, value, tooltip (only numeric configs)
+        // Define all config entries: key, label (clave de lang), value, tooltip (clave de lang)
         Object[][] configs = {
             // Hunger configs
-            {"MaxHunger", "Max Hunger", String.valueOf(config.getMaxHunger()), "Maximum hunger level the player can have."},
-            {"StarvationTickRate", "Starvation Tick Rate", String.valueOf(config.getStarvationTickRate()), "How often (in seconds) hunger decreases."},
-            {"StarvationPerTick", "Starvation Per Tick", String.valueOf(config.getStarvationPerTick()), "Amount of hunger lost per tick."},
-            {"StarvationDamage", "Starvation Damage", String.valueOf(config.getStarvationDamage()), "Damage taken when hunger reaches zero."},
-            {"HungryThreshold", "Hungry Threshold", String.valueOf(config.getHungryThreshold()), "Hunger level where warnings start appearing."},
-            {"BlockBreakHungerCost", "Block Break Hunger Cost", String.valueOf(config.getBlockBreakHungerCost()), "Hunger consumed when breaking blocks."},
-            {"JumpHungerCost", "Jump Hunger Cost", String.valueOf(config.getJumpHungerCost()), "Hunger consumed when jumping."},
+            {"MaxHunger", "cfg.max_hunger", String.valueOf(config.getMaxHunger()), "tip.max_hunger"},
+            {"StarvationTickRate", "cfg.starvation_tick_rate", String.valueOf(config.getStarvationTickRate()), "tip.starvation_tick_rate"},
+            {"StarvationPerTick", "cfg.starvation_per_tick", String.valueOf(config.getStarvationPerTick()), "tip.starvation_per_tick"},
+            {"StarvationDamage", "cfg.starvation_damage", String.valueOf(config.getStarvationDamage()), "tip.starvation_damage"},
+            {"HungryThreshold", "cfg.hungry_threshold", String.valueOf(config.getHungryThreshold()), "tip.hungry_threshold"},
+            {"BlockBreakHungerCost", "cfg.block_break_hunger_cost", String.valueOf(config.getBlockBreakHungerCost()), "tip.block_break_hunger_cost"},
+            {"JumpHungerCost", "cfg.jump_hunger_cost", String.valueOf(config.getJumpHungerCost()), "tip.jump_hunger_cost"},
             // Thirst configs
-            {"MaxThirst", "Max Thirst", String.valueOf(config.getMaxThirst()), "Maximum thirst level the player can have."},
-            {"ThirstDecayRate", "Thirst Decay Rate", String.valueOf(config.getThirstDecayRate()), "Amount of thirst lost per tick."},
-            {"SprintThirstMultiplier", "Sprint Thirst Multiplier", String.valueOf(config.getSprintThirstMultiplier()), "Multiplier applied to thirst decay when sprinting."},
-            {"ThirstDamage", "Thirst Damage", String.valueOf(config.getThirstDamage()), "Damage taken when thirst reaches zero."},
-            {"ThirstyThreshold", "Thirsty Threshold", String.valueOf(config.getThirstyThreshold()), "Thirst level where warnings start appearing."},
-            {"StarvationStaminaModifier", "Stamina Modifier", String.valueOf(config.getStarvationStaminaModifier()), "How much stamina depletion affects hunger decay."},
-            
-            // Idle Pause configs
-            {"IdlePauseEnabled", "Idle Pause Enabled", String.valueOf(config.isIdlePauseEnabled()), "Pause hunger/thirst when standing still."},
-            {"IdlePauseSeconds", "Idle Pause Time (s)", String.valueOf(config.getIdlePauseSeconds()), "Time in seconds to wait before pausing decay."}
+            {"MaxThirst", "cfg.max_thirst", String.valueOf(config.getMaxThirst()), "tip.max_thirst"},
+            {"ThirstDecayRate", "cfg.thirst_decay_rate", String.valueOf(config.getThirstDecayRate()), "tip.thirst_decay_rate"},
+            {"SprintThirstMultiplier", "cfg.sprint_thirst_multiplier", String.valueOf(config.getSprintThirstMultiplier()), "tip.sprint_thirst_multiplier"},
+            {"ThirstDamage", "cfg.thirst_damage", String.valueOf(config.getThirstDamage()), "tip.thirst_damage"},
+            {"ThirstyThreshold", "cfg.thirsty_threshold", String.valueOf(config.getThirstyThreshold()), "tip.thirsty_threshold"},
+            {"BlockBreakThirstCost", "cfg.block_break_thirst_cost", String.valueOf(config.getBlockBreakThirstCost()), "tip.block_break_thirst_cost"},
+            {"JumpThirstCost", "cfg.jump_thirst_cost", String.valueOf(config.getJumpThirstCost()), "tip.jump_thirst_cost"},
+            {"StarvationStaminaModifier", "cfg.starvation_stamina_modifier", String.valueOf(config.getStarvationStaminaModifier()), "tip.starvation_stamina_modifier"},
+
+            // Well Fed configs
+            {"WellFedEnabled", "cfg.well_fed_enabled", String.valueOf(config.isWellFedEnabled()), "tip.well_fed_enabled"},
+            {"WellFedThreshold", "cfg.well_fed_threshold", String.valueOf(config.getWellFedThreshold()), "tip.well_fed_threshold"},
+
+            // Sleep + Idle Pause configs
+            {"PauseWhileSleeping", "cfg.pause_while_sleeping", String.valueOf(config.isPauseWhileSleeping()), "tip.pause_while_sleeping"},
+            {"IdlePauseEnabled", "cfg.idle_pause_enabled", String.valueOf(config.isIdlePauseEnabled()), "tip.idle_pause_enabled"},
+            {"IdlePauseSeconds", "cfg.idle_pause_seconds", String.valueOf(config.getIdlePauseSeconds()), "tip.idle_pause_seconds"},
+
+            // HUD position
+            {"HudEstilo", "cfg.hud_estilo", config.getHudEstilo(), "tip.hud_estilo"},
+            {"HudOffsetY", "cfg.hud_offset_y", String.valueOf(config.getHudOffsetY()), "tip.hud_offset_y"},
+            {"HudInitDelayMs", "cfg.hud_init_delay_ms", String.valueOf(config.getHudInitDelayMs()), "tip.hud_init_delay_ms"},
+
+            // Mundos donde el mod NO actua (lista separada por comas; admite "prefijo*")
+            {"DisabledWorlds", "cfg.disabled_worlds", String.join(", ", config.getDisabledWorlds()), "tip.disabled_worlds"}
         };
-        
+
+        UUID uuid = playerRef.getUuid();
         for (int i = 0; i < configs.length; i++) {
             String key = (String) configs[i][0];
-            String label = (String) configs[i][1];
+            String label = Lang.t(uuid, (String) configs[i][1]);
             String value = (String) configs[i][2];
-            String tooltip = (String) configs[i][3];
+            String tooltip = Lang.t(uuid, (String) configs[i][3]);
             
             String selector = "#ConfigList[" + i + "]";
             cmd.append("#ConfigList", "Pages/ConfigEntry.ui");
@@ -502,9 +497,24 @@ public class EasyHungerValuesPage extends InteractiveCustomUIPage<EasyHungerValu
             cmd.set(selector + " #ConfigLabel.Text", label);
             cmd.set(selector + " #ConfigValue.Value", value);
             cmd.set(selector + ".TooltipText", tooltip);
+            if (key.equals("DisabledWorlds")) {
+                // Una lista de nombres no cabe en 120 px. Se ensancha SOLO esta fila desde Java;
+                // el .ui compartido no se toca (hay un espaciador flexible entre etiqueta y campo).
+                com.hypixel.hytale.server.core.ui.Anchor wide = new com.hypixel.hytale.server.core.ui.Anchor();
+                wide.setWidth(com.hypixel.hytale.server.core.ui.Value.of(320));
+                wide.setHeight(com.hypixel.hytale.server.core.ui.Value.of(26));
+                wide.setVertical(com.hypixel.hytale.server.core.ui.Value.of(0));
+                cmd.setObject(selector + " #ConfigValue.Anchor", wide);
+            }
             
+            shownConfigValues.put(key, value);
+
+            // FocusLost, no ValueChanged: ValueChanged aplicaba cada tecla, asi que escribir
+            // MaxHunger=100 pasaba por 1 y recortaba a 1 el hambre guardada de todos. Al perder el
+            // foco solo llega el valor final. Es el patron de la pagina vanilla
+            // TriggerVolumeInspectorPage (TextField #SelectedNameField + FocusLost + .Value).
             evt.addEventBinding(
-                CustomUIEventBindingType.ValueChanged,
+                CustomUIEventBindingType.FocusLost,
                 selector + " #ConfigValue",
                 new EventData()
                     .append("Action", "setConfig")
@@ -517,7 +527,7 @@ public class EasyHungerValuesPage extends InteractiveCustomUIPage<EasyHungerValu
 
     private void handleAdd(ConfigEventData data) {
         if (data.newItemId == null || data.newItemId.trim().isEmpty()) {
-            playerRef.sendMessage(Message.empty().insert("Error: Item ID cannot be empty!"));
+            playerRef.sendMessage(Msg.error(playerRef.getUuid(), "panel.id_vacio"));
             return;
         }
 
@@ -528,7 +538,7 @@ public class EasyHungerValuesPage extends InteractiveCustomUIPage<EasyHungerValu
             try {
                 value = Float.parseFloat(data.newValue.trim());
             } catch (NumberFormatException e) {
-                playerRef.sendMessage(Message.empty().insert("Error: Invalid value!"));
+                playerRef.sendMessage(Msg.error(playerRef.getUuid(), "panel.valor_no_numero"));
                 return;
             }
         }
@@ -540,7 +550,8 @@ public class EasyHungerValuesPage extends InteractiveCustomUIPage<EasyHungerValu
             EasyHunger.get().getDrinksConfig().setDrinkValue(itemId, value);
             EasyHunger.get().saveDrinksConfig();
         }
-        playerRef.sendMessage(Message.empty().insert("Added: " + itemId + " = " + formatValue(value)));
+        playerRef.sendMessage(Msg.info(playerRef.getUuid(), "panel.agregado",
+                "item", itemId, "valor", formatValue(value)));
     }
 
     private void handleSetValue(ConfigEventData data) {
@@ -557,7 +568,7 @@ public class EasyHungerValuesPage extends InteractiveCustomUIPage<EasyHungerValu
                 newValue = Float.parseFloat(data.value.trim());
                 newValue = Math.max(0, newValue);
             } catch (NumberFormatException e) {
-                playerRef.sendMessage(Message.empty().insert("Invalid value for " + itemId));
+                playerRef.sendMessage(Msg.error(playerRef.getUuid(), "panel.valor_item_invalido", "item", itemId));
                 return;
             }
             
@@ -568,11 +579,32 @@ public class EasyHungerValuesPage extends InteractiveCustomUIPage<EasyHungerValu
                 EasyHunger.get().getDrinksConfig().setDrinkValue(itemId, newValue);
                 EasyHunger.get().saveDrinksConfig();
             }
-            playerRef.sendMessage(Message.empty().insert("Updated: " + itemId + " = " + formatValue(newValue)));
+            playerRef.sendMessage(Msg.info(playerRef.getUuid(), "panel.actualizado",
+                    "item", itemId, "valor", formatValue(newValue)));
             
         } catch (NumberFormatException e) {
             // Ignore invalid index
         }
+    }
+
+    /**
+     * Por que no se aplico un valor, en el idioma de quien lo lee. Los rechazos de rango traen su
+     * clave de lang; cualquier otra excepcion sale con su mensaje tal cual.
+     */
+    static String motivo(UUID uuid, IllegalArgumentException e) {
+        if (e instanceof EasyHungerConfig.ValorRechazado r) {
+            return Lang.t(uuid, r.clave, r.args);
+        }
+        return String.valueOf(e.getMessage());
+    }
+
+    /** 1.5.20: ANILLOS o BARRAS; otra cosa se rechaza con el mensaje en espanol. */
+    private static String parseHudEstilo(String raw) {
+        String v = raw == null ? "" : raw.trim().toUpperCase();
+        if (v.equals("ANILLOS") || v.equals("BARRAS")) return v;
+        throw new EasyHungerConfig.ValorRechazado(
+                "HudEstilo debe ser ANILLOS o BARRAS (llegó " + raw + ")",
+                "rango.hud_estilo", "valor", raw);
     }
 
     private void handleSetConfig(ConfigEventData data) {
@@ -581,6 +613,10 @@ public class EasyHungerValuesPage extends InteractiveCustomUIPage<EasyHungerValu
         var config = EasyHunger.get().getConfig();
         String key = data.configKey;
         String valueStr = data.value.trim();
+
+        // FocusLost llega tambien al entrar y salir del campo sin tocarlo: si el valor es el
+        // mismo que ya se aplico, no se guarda ni se avisa otra vez.
+        if (valueStr.equals(shownConfigValues.get(key))) return;
         
         try {
             switch (key) {
@@ -629,33 +665,74 @@ public class EasyHungerValuesPage extends InteractiveCustomUIPage<EasyHungerValu
                 case "WellFedThreshold":
                     config.setWellFedThreshold(Float.parseFloat(valueStr));
                     break;
-                    
-                // Idle Pause
+                case "WellFedEnabled":
+                    config.setWellFedEnabled(Boolean.parseBoolean(valueStr));
+                    break;
+
+                // New thirst drain costs (parity with hunger)
+                case "BlockBreakThirstCost":
+                    config.setBlockBreakThirstCost(Float.parseFloat(valueStr));
+                    break;
+                case "JumpThirstCost":
+                    config.setJumpThirstCost(Float.parseFloat(valueStr));
+                    break;
+
+                // Sleep + Idle Pause
+                case "PauseWhileSleeping":
+                    config.setPauseWhileSleeping(Boolean.parseBoolean(valueStr));
+                    break;
                 case "IdlePauseEnabled":
                     config.setIdlePauseEnabled(Boolean.parseBoolean(valueStr));
                     break;
                 case "IdlePauseSeconds":
                     config.setIdlePauseSeconds(Float.parseFloat(valueStr));
                     break;
-                    
+
+                // HUD position
+                case "HudEstilo":
+                    config.setHudEstilo(parseHudEstilo(valueStr));
+                    break;
+                case "HudOffsetY":
+                    config.setHudOffsetY(Integer.parseInt(valueStr));
+                    break;
+                case "HudInitDelayMs":
+                    config.setHudInitDelayMs(Integer.parseInt(valueStr));
+                    break;
+                case "DisabledWorlds":
+                    // "Hub, Coliseo, instance-Hauldron*" -> entradas sin vacios. Vacio = el mod
+                    // actua en todos los mundos.
+                    config.setDisabledWorlds(java.util.Arrays.stream(valueStr.split(","))
+                            .map(String::trim).filter(s -> !s.isEmpty()).toArray(String[]::new));
+                    break;
+
                 default:
-                    playerRef.sendMessage(Message.empty().insert("Unknown config key: " + key));
+                    playerRef.sendMessage(Msg.error(playerRef.getUuid(), "panel.clave_desconocida", "clave", key));
                     return;
             }
             
             // Save config
             EasyHunger.get().saveConfig();
-            playerRef.sendMessage(Message.empty().insert("Config updated: " + key + " = " + valueStr));
-            
+            shownConfigValues.put(key, valueStr);
+            playerRef.sendMessage(Msg.info(playerRef.getUuid(), "panel.config_actualizada",
+                    "clave", key, "valor", valueStr));
+
         } catch (NumberFormatException e) {
-            playerRef.sendMessage(Message.empty().insert("Invalid value for " + key + ": " + valueStr));
+            playerRef.sendMessage(Msg.error(playerRef.getUuid(), "panel.valor_config_invalido",
+                    "clave", key, "valor", valueStr));
+        } catch (IllegalArgumentException e) {
+            // Fuera de rango (setters de EasyHungerConfig): no se aplica ni se guarda nada.
+            playerRef.sendMessage(Msg.error(playerRef.getUuid(), "panel.no_aplicado",
+                    "motivo", motivo(playerRef.getUuid(), e)));
         }
     }
 
     /**
      * Renders the player's inventory grid (4 rows of 9 slots + hotbar).
      */
-    private void renderInventory(UICommandBuilder cmd, UIEventBuilder evt, Player player) {
+    private void renderInventory(UICommandBuilder cmd, UIEventBuilder evt, Ref<EntityStore> ref, Store<EntityStore> store) {
+        InventoryComponent.Storage storageComp = store.getComponent(ref, InventoryComponent.Storage.getComponentType());
+        InventoryComponent.Hotbar hotbarComp = store.getComponent(ref, InventoryComponent.Hotbar.getComponentType());
+
         // Main inventory: 4 rows of 9 slots (slots 0-35)
         for (int row = 0; row < 4; row++) {
             String rowId = "#InvRow" + row;
@@ -664,7 +741,7 @@ public class EasyHungerValuesPage extends InteractiveCustomUIPage<EasyHungerValu
                 int slot = row * 9 + i;
                 cmd.append(rowId, "Pages/EasyHungerInventorySlot.ui");
                 String sel = rowId + "[" + i + "]";
-                ItemStack stack = player.getInventory().getStorage().getItemStack((short) slot);
+                ItemStack stack = storageComp != null ? storageComp.getInventory().getItemStack((short) slot) : null;
                 if (stack != null && !stack.isEmpty()) {
                     cmd.set(sel + " #ItemIcon.ItemId", stack.getItemId());
                     if (stack.getQuantity() > 1) {
@@ -681,7 +758,7 @@ public class EasyHungerValuesPage extends InteractiveCustomUIPage<EasyHungerValu
         for (int i = 0; i < 9; i++) {
             cmd.append("#HotbarRow", "Pages/EasyHungerInventorySlot.ui");
             String sel = "#HotbarRow[" + i + "]";
-            ItemStack stack = player.getInventory().getHotbar().getItemStack((short) i);
+            ItemStack stack = hotbarComp != null ? hotbarComp.getInventory().getItemStack((short) i) : null;
             if (stack != null && !stack.isEmpty()) {
                 cmd.set(sel + " #ItemIcon.ItemId", stack.getItemId());
                 if (stack.getQuantity() > 1) {
@@ -710,19 +787,28 @@ public class EasyHungerValuesPage extends InteractiveCustomUIPage<EasyHungerValu
     }
 
     /**
-     * Checks if there are any installed items for a specific category.
-     * Used to hide category buttons when no items from that mod are installed.
+     * Ids de allItems que existen en el juego (o son de EasyHunger), en el orden del mapa.
      */
-    private boolean hasCategoryItems(String categoryName, Map<String, Float> allItems) {
-        return allItems.keySet().stream().anyMatch(itemId -> {
+    private static List<String> installedItemIds(Map<String, Float> allItems) {
+        List<String> installed = new ArrayList<>();
+        for (String itemId : allItems.keySet()) {
             // Check if item exists in game (or is from EasyHunger)
             if (!itemId.startsWith("EasyHunger_")) {
                 Item item = (Item) Item.getAssetMap().getAsset(itemId);
                 if (item == null) item = (Item) Item.getAssetMap().getAsset("*" + itemId);
-                if (item == null) return false;
+                if (item == null) continue;
             }
-            // Check category using the filter
-            return ItemCategoryFilter.matchesCategory(itemId, categoryName);
-        });
+            installed.add(itemId);
+        }
+        return installed;
+    }
+
+    /**
+     * Checks if there are any installed items for a specific category.
+     * Used to hide category buttons when no items from that mod are installed.
+     */
+    private static boolean hasCategoryItems(String categoryName, List<String> installedIds) {
+        // Check category using the filter
+        return installedIds.stream().anyMatch(itemId -> ItemCategoryFilter.matchesCategory(itemId, categoryName));
     }
 }

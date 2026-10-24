@@ -7,17 +7,20 @@ import com.hypixel.hytale.server.core.ui.Value;
 import com.hypixel.hytale.server.core.ui.builder.UICommandBuilder;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.haas.easyhunger.EasyHunger;
-import com.haas.easyhunger.compat.hud.HudManager;
 import com.haas.easyhunger.components.HungerComponent;
 import com.haas.easyhunger.config.EasyHungerConfig;
-import com.haas.easyhunger.config.HudPosition;
 import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
 
-import java.util.WeakHashMap;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 
 public class EasyHungerHud extends CustomUIHud {
-    static private final WeakHashMap<PlayerRef, EasyHungerHud> hudMap = new WeakHashMap<>();
+    /**
+     * Keyed by player UUID (not PlayerRef) so lookups are reliable regardless of which
+     * PlayerRef instance the caller holds — PlayerRef does not override equals/hashCode.
+     */
+    static private final ConcurrentHashMap<UUID, EasyHungerHud> hudMap = new ConcurrentHashMap<>();
     static public final String hudIdentifier = "com.haas.easyhunger.hud.hunger";
     private GameMode gameMode;
     private float hungerLevel;
@@ -25,18 +28,18 @@ public class EasyHungerHud extends CustomUIHud {
     private boolean visible = true;
 
     public EasyHungerHud(@NonNullDecl PlayerRef playerRef, GameMode gameMode, float hungerLevel) {
-        super(playerRef);
+        super(playerRef, hudIdentifier);
         this.gameMode = gameMode;
         this.hungerLevel = hungerLevel;
-        hudMap.put(playerRef, this);
+        hudMap.put(playerRef.getUuid(), this);
     }
 
     @Override
     protected void build(@NonNullDecl UICommandBuilder uiCommandBuilder) {
         EasyHungerConfig config = EasyHunger.get().getConfig();
-        HudPosition hudPosition = config.getHudPosition();
-        uiCommandBuilder.append("HUD/Hunger/Hunger.ui");
-        updateHudPosition(uiCommandBuilder, hudPosition);
+        // 1.5.20: ANILLOS o BARRAS (HudEstilo); los dos .ui tienen los mismos ids. Cambiar de estilo pide relog.
+        uiCommandBuilder.append(RuneLayout.uiFile(true));
+        updateHudPosition(uiCommandBuilder);
         updateGameMode(uiCommandBuilder, this.gameMode);
         updateHungerLevel(uiCommandBuilder, this.hungerLevel);
         updateVisibility(uiCommandBuilder, this.visible);
@@ -47,37 +50,11 @@ public class EasyHungerHud extends CustomUIHud {
         uiCommandBuilder.set("#EasyHungerContainer.Visible", this.visible);
     }
 
-    protected void updateHudPosition(UICommandBuilder uiCommandBuilder, HudPosition hudPosition) {
-        // Calculation constants from old mod .ui file
-        int DefaultItemSlotSize = 74;
-        int DefaultItemSlotsPerRow = 9;
-        int DefaultItemGridPadding = 2;
-        int HotbarSlotSpacingHud = 4;
-        
-        int HotbarHeight = DefaultItemSlotSize + (2 * DefaultItemGridPadding);
-        // Correct width calculation: 9 slots have 8 spaces between them
-        int HotbarWidthHud = (DefaultItemSlotSize * DefaultItemSlotsPerRow) + (HotbarSlotSpacingHud * DefaultItemSlotsPerRow);
-
-        int BottomMargin = 30;
-        int ContainerMargin = 6;
-        int InventoryClosedContainerMargin = BottomMargin + ContainerMargin;
-        
-        int calculatedBottomOffset = InventoryClosedContainerMargin + HotbarHeight + 6;
-
-        Anchor anchor = new Anchor();
-        
-        switch (hudPosition) {
-            case TOP:
-                 anchor.setWidth(Value.of(HotbarWidthHud));
-                 anchor.setBottom(Value.of(InventoryClosedContainerMargin + HotbarHeight + 32));
-                 break;
-            case BOTTOM:
-                anchor.setWidth(Value.of(HotbarWidthHud));
-                anchor.setBottom(Value.of(4));
-                break;
-        }
-
-        uiCommandBuilder.setObject("#EasyHungerContainer.Anchor", anchor);
+    protected void updateHudPosition(UICommandBuilder uiCommandBuilder) {
+        // Geometria compartida con EasyWaterHud: ver RuneLayout (raiz centrada, 1.5.20).
+        uiCommandBuilder.setObject("#EasyHungerRoot.Anchor", RuneLayout.rootAnchor());
+        Anchor box = RuneLayout.containerAnchor(true);
+        if (box != null) uiCommandBuilder.setObject("#EasyHungerContainer.Anchor", box);
     }
 
     protected void updateHungerLevel(UICommandBuilder uiCommandBuilder, float hungerLevel) {
@@ -86,8 +63,7 @@ public class EasyHungerHud extends CustomUIHud {
         float barValue = hungerLevel / max;
         uiCommandBuilder.set("#EasyHungerHungerBar.Value", barValue);
         uiCommandBuilder.set("#EasyHungerCreativeHungerBar.Value", barValue);
-        uiCommandBuilder.set("#EasyHungerProgressBarEffect.Value", barValue);
-        
+
         // Also update preview if active
         if (this.previewHungerRestoration != 0.0f) {
             updateHungerPreview(uiCommandBuilder, this.previewHungerRestoration);
@@ -96,16 +72,16 @@ public class EasyHungerHud extends CustomUIHud {
 
     protected void updateHungerPreview(UICommandBuilder uiCommandBuilder, float hungerRestoration) {
         this.previewHungerRestoration = hungerRestoration;
-        
+
         if (hungerRestoration == 0.0f) {
             uiCommandBuilder.set("#EasyHungerPreviewBar.Value", 0.0f);
             return;
         }
-        
+
         float max = EasyHunger.get().getConfig().getMaxHunger();
         float expectedLevel = Math.min(this.hungerLevel + hungerRestoration, max);
         float previewBarValue = expectedLevel / max;
-        
+
         uiCommandBuilder.set("#EasyHungerPreviewBar.Value", previewBarValue);
     }
 
@@ -119,46 +95,76 @@ public class EasyHungerHud extends CustomUIHud {
         uiCommandBuilder.set("#EasyHungerCreativeHungerBar.Visible", gameMode == GameMode.Creative);
     }
 
-    static public void updatePlayerHungerLevel(@NonNullDecl PlayerRef playerRef, float hungerLevel) {
-        EasyHungerHud hud = hudMap.get(playerRef);
-        if (hud == null) {
-            // Vanilla/AutoMultiHud: redirect to combined HUD
-            EasyCombinedHud.updatePlayerHungerLevel(playerRef, hungerLevel);
-            return;
+    /**
+     * true si este jugador tiene HUD registrado en el servidor.
+     *
+     * Sirve para distinguir "lo tienes oculto" de "no tienes HUD", que hasta ahora se veian igual
+     * desde fuera: ambos casos hacian que /eh show no hiciera nada y sin decir nada.
+     */
+    static public boolean hasHud(@NonNullDecl PlayerRef playerRef) {
+        UUID uuid = playerRef.getUuid();
+        return uuid != null && hudMap.containsKey(uuid);
+    }
+
+    /** Call on PlayerDisconnectEvent to release the map entry for this player. */
+    static public void removePlayer(@NonNullDecl PlayerRef playerRef) {
+        UUID uuid = playerRef.getUuid();
+        if (uuid != null) hudMap.remove(uuid);
+    }
+
+    /**
+     * Quita la barra del cliente al llegar a un mundo excluido (ver {@code WorldGate}), sin pasar
+     * por HudManager.
+     *
+     * Hace falta saltarse HudManager porque {@code removeCustomHud()} SOLO envia el paquete de
+     * remocion si el HUD esta en su mapa — verificado en el bytecode de 0.5.7: hay un {@code ifnull}
+     * que se salta el envio. Al cambiar de mundo el jugador estrena entidad y estrena HudManager
+     * vacio, con lo cual esa llamada seria un no-op y no limpiaria lo que el cliente ya tenga
+     * pintado de antes. Aqui enviamos el mismo paquete que enviaria el server.
+     *
+     * Esto es una remocion dirigida a NUESTRA key, no tiene que ver con el re-send que en 1.3.1
+     * tumbo todos los HUDs del server: aquello reenviaba HUDs enteros sobre la capa compartida de
+     * custom UI del cliente.
+     */
+    static public void forceClear(@NonNullDecl PlayerRef playerRef) {
+        removePlayer(playerRef);
+        try {
+            com.hypixel.hytale.server.core.io.PacketHandler handler = playerRef.getPacketHandler();
+            if (handler == null) return;
+            handler.writeNoCache(new com.hypixel.hytale.protocol.packets.interface_.CustomHud(
+                    hudIdentifier, 0, true, null));
+        } catch (Exception ignored) {
+            // El jugador puede haberse desconectado entre la comprobacion y el envio.
         }
+    }
+
+    static public void updatePlayerHungerLevel(@NonNullDecl PlayerRef playerRef, float hungerLevel) {
+        EasyHungerHud hud = hudMap.get(playerRef.getUuid());
+        if (hud == null) return;
         UICommandBuilder uiCommandBuilder = new UICommandBuilder();
         hud.updateHungerLevel(uiCommandBuilder, hungerLevel);
         hud.update(false, uiCommandBuilder);
     }
-    
+
     static public void updatePlayerHungerPreview(@NonNullDecl PlayerRef playerRef, float hungerRestoration) {
-        EasyHungerHud hud = hudMap.get(playerRef);
-        if (hud == null) {
-            EasyCombinedHud.updatePlayerHungerPreview(playerRef, hungerRestoration);
-            return;
-        }
+        EasyHungerHud hud = hudMap.get(playerRef.getUuid());
+        if (hud == null) return;
         UICommandBuilder uiCommandBuilder = new UICommandBuilder();
         hud.updateHungerPreview(uiCommandBuilder, hungerRestoration);
         hud.update(false, uiCommandBuilder);
     }
-    
+
     static public void updatePlayerGameMode(@NonNullDecl PlayerRef playerRef, GameMode gameMode) {
-        EasyHungerHud hud = hudMap.get(playerRef);
-        if (hud == null) {
-            EasyCombinedHud.updatePlayerGameMode(playerRef, gameMode);
-            return;
-        }
+        EasyHungerHud hud = hudMap.get(playerRef.getUuid());
+        if (hud == null) return;
         UICommandBuilder uiCommandBuilder = new UICommandBuilder();
         hud.updateGameMode(uiCommandBuilder, gameMode);
         hud.update(false, uiCommandBuilder);
     }
 
     static public void updatePlayerHudVisibility(@NonNullDecl PlayerRef playerRef, boolean visible) {
-        EasyHungerHud hud = hudMap.get(playerRef);
-        if (hud == null) {
-            EasyCombinedHud.updatePlayerHudVisibility(playerRef, visible);
-            return;
-        }
+        EasyHungerHud hud = hudMap.get(playerRef.getUuid());
+        if (hud == null) return;
         UICommandBuilder uiCommandBuilder = new UICommandBuilder();
         hud.updateVisibility(uiCommandBuilder, visible);
         hud.update(false, uiCommandBuilder);

@@ -16,5 +16,5 @@ items.EasyHunger_Flask_Empty.description = An empty flask that can be filled wit
 items.EasyHunger_Flask_Filled.name = Water Flask
 items.EasyHunger_Flask_Filled.description = A flask filled with fresh water. Drink to restore hunger.
 
-server.items.EasyHunger_Template_Waterskin.name = Waterskin
-server.items.EasyHunger_Template_Waterskin.description = Carry water with you
+items.EasyHunger_Template_Waterskin.name = Waterskin
+items.EasyHunger_Template_Waterskin.description = Carry water with you

@@ -81,11 +81,24 @@ public class StartDrinkingInteraction extends SimpleInstantInteraction {
                 }
             }
             
+            // Si es comida que pasa por la cadena de beber (platos), la vista previa va a la barra
+            // de HAMBRE con el valor de comida, igual que lo que luego se va a aplicar.
+            String previewId = null;
+            if (context.getHeldItem() != null) previewId = context.getHeldItem().getItemId();
+            else if (context.getOriginalItemType() != null) previewId = context.getOriginalItemType().getId();
+            if (previewId != null && this.thirstRestoreAmount <= 0
+                    && com.haas.easyhunger.utils.ConsumableKind.isFoodOnly(EasyHunger.get().getDrinksConfig(),
+                            EasyHunger.get().getFoodsConfig(), previewId)) {
+                com.haas.easyhunger.ui.EasyHungerHud.updatePlayerHungerPreview(playerRef,
+                        com.haas.easyhunger.utils.ConsumableKind.foodValue(EasyHunger.get().getFoodsConfig(), previewId));
+                return;
+            }
+
             // Show preview on HUD
             EasyWaterHud.updatePlayerThirstPreview(playerRef, restoreAmount);
             
         } catch (Exception e) {
-            EasyHunger.logInfo("START DRINKING ERROR: " + e.toString());
+            EasyHunger.LOGGER.at(java.util.logging.Level.WARNING).withCause(e).log("START DRINKING ERROR");
         }
     }
 }

@@ -422,25 +422,4 @@ public class ItemCategoryFilter {
         }
         return getCategory(itemId).equals(category);
     }
-    
-    /**
-     * Checks if an item is from the SNIP3 FoodPack mod.
-     */
-    public static boolean isSnip3Item(String itemId) {
-        return SNIP3_ITEMS.contains(itemId);
-    }
-
-    /**
-     * Checks if an item is from the HiddensHarvestDelights mod.
-     */
-    public static boolean isHiddensItem(String itemId) {
-        return HIDDENS_ITEMS.contains(itemId);
-    }
-
-    /**
-     * Checks if an item is from the Food Galore mod.
-     */
-    public static boolean isGaloreItem(String itemId) {
-        return GALORE_ITEMS.contains(itemId);
-    }
 }

@@ -3,6 +3,10 @@ package com.haas.easyhunger.interactions;
 import com.haas.easyhunger.EasyHunger;
 import com.haas.easyhunger.components.ThirstComponent;
 import com.haas.easyhunger.ui.EasyWaterHud;
+import com.haas.easyhunger.utils.WorldGate;
+import com.haas.easyhunger.utils.ConsumableKind;
+import com.haas.easyhunger.components.HungerComponent;
+import com.haas.easyhunger.ui.EasyHungerHud;
 
 import com.hypixel.hytale.codec.Codec;
 import com.hypixel.hytale.codec.KeyedCodec;
@@ -38,19 +42,31 @@ public class DrinkWaterInteraction extends SimpleInstantInteraction {
         super();
     }
     
+    /** Id del item consumido sin el asterisco de estado, o null. Mismo orden que el resto del mod. */
+    private static String resolveItemId(InteractionContext context) {
+        com.hypixel.hytale.server.core.asset.type.item.config.Item item = context.getOriginalItemType();
+        String id = (item != null) ? item.getId() : null;
+        if (id == null && context.getHeldItem() != null) {
+            id = context.getHeldItem().getItemId();
+        }
+        return ConsumableKind.normalize(id);
+    }
+
     @Override
     protected void firstRun(@Nonnull InteractionType type, 
                            @Nonnull InteractionContext context, 
                            @Nonnull CooldownHandler cooldownHandler) {
+        // Fuera del try para poder limpiar la vista previa en el finally, salga por donde salga.
+        PlayerRef playerRef = null;
         try {
             Ref<EntityStore> entityRef = context.getEntity();
             if (entityRef == null || !entityRef.isValid()) {
                 context.getState().state = InteractionState.Failed;
                 return;
             }
-            
+
             Store<EntityStore> store = entityRef.getStore();
-            PlayerRef playerRef = store.getComponent(entityRef, PlayerRef.getComponentType());
+            playerRef = store.getComponent(entityRef, PlayerRef.getComponentType());
             
             if (playerRef == null) {
                 // Try fallback search? No, Component Access is safer.
@@ -58,8 +74,33 @@ public class DrinkWaterInteraction extends SimpleInstantInteraction {
                 return;
             }
             
+            // Mundo excluido: el mod queda inerte, beber no restaura nada. Finished y no Failed,
+            // por lo mismo que en ConsumeFoodInteraction.
+            if (!WorldGate.isActive(store)) {
+                context.getState().state = InteractionState.Finished;
+                return;
+            }
+
+            // Si el item que llega por la cadena de beber es SOLO comida (ni bebida configurada ni
+            // ThirstRestoreAmount explicito en el JSON), sube HAMBRE y no sed. Es el caso de los platos
+            // de AleAndHearth: usan esta cadena porque es la unica que gasta durabilidad y deja el plato
+            // vacio, y antes daban 15 de sed por defecto sin tocar la barra de comida.
+            // Ver ConsumableKind para la regla completa.
+            String consumedId = resolveItemId(context);
+            if (this.thirstRestoreAmount <= 0 && consumedId != null
+                    && ConsumableKind.isFoodOnly(EasyHunger.get().getDrinksConfig(),
+                            EasyHunger.get().getFoodsConfig(), consumedId)) {
+                HungerComponent hunger = store.getComponent(entityRef, HungerComponent.getComponentType());
+                if (hunger != null && hunger.getHungerLevel() < EasyHunger.get().getConfig().getMaxHunger()) {
+                    hunger.feed(ConsumableKind.foodValue(EasyHunger.get().getFoodsConfig(), consumedId));
+                    EasyHungerHud.updatePlayerHungerLevel(playerRef, hunger.getHungerLevel());
+                }
+                context.getState().state = InteractionState.Finished;
+                return;
+            }
+
             ThirstComponent thirst = store.getComponent(entityRef, ThirstComponent.getComponentType());
-            
+
             if (thirst != null) {
                 float max = EasyHunger.get().getConfig().getMaxThirst();
                 if (thirst.getThirstLevel() < max) {
@@ -99,19 +140,30 @@ public class DrinkWaterInteraction extends SimpleInstantInteraction {
                     
                     thirst.drink(restoreAmount);
                     
-                    // Update HUD and clear preview
+                    // Update HUD (la vista previa se limpia en el finally)
                     EasyWaterHud.updatePlayerThirstLevel(playerRef, thirst.getThirstLevel());
-                    EasyWaterHud.updatePlayerThirstPreview(playerRef, 0.0f);
                 } else {
                      // Debug: EasyHunger.logInfo("[DrinkInteraction] Thirst Full.");
                 }
             }
-            
+
             context.getState().state = InteractionState.Finished;
-            
+
         } catch (Exception e) {
-            EasyHunger.logInfo("DRINK WATER ERROR: " + e.toString());
+            EasyHunger.LOGGER.at(java.util.logging.Level.WARNING).withCause(e).log("DRINK WATER ERROR");
             context.getState().state = InteractionState.Failed;
+        } finally {
+            // Antes solo se limpiaba si la sed subia: con la sed llena el anillo de vista previa
+            // se quedaba pegado hasta la siguiente bebida.
+            if (playerRef != null) {
+                try {
+                    EasyWaterHud.updatePlayerThirstPreview(playerRef, 0.0f);
+                    // La vista previa de START puede haber ido a la barra de hambre (plato).
+                    EasyHungerHud.updatePlayerHungerPreview(playerRef, 0.0f);
+                } catch (Exception e) {
+                    EasyHunger.LOGGER.at(java.util.logging.Level.WARNING).withCause(e).log("DRINK WATER PREVIEW ERROR");
+                }
+            }
         }
     }
 }

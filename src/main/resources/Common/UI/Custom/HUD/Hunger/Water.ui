@@ -1,42 +1,42 @@
-@EasyWaterAdventureBarFill = "WaterBarFill.png";
-@EasyWaterCreativeBarFill = "WaterCreativeBarFill.png";
-@EasyWaterPreviewBarFill = "WaterBarFillPreview.png";
+// HUD de sed - diseno "Runa" de MyTale (1.5.0). Posicion en espejo del espacio Z (1.5.20).
+// Gemelo de Hunger.ui: misma anatomia y misma mascara, solo cambian los
+// colores y los selectores. El porque de la caja de 100, del orden de capas
+// y de la raiz centrada esta explicado en Hunger.ui.
 
-Group {
-    LayoutMode: Bottom;
+@EasyWaterRuneMask = "RuneMask.png";
+
+Group #EasyWaterRoot {
+    Anchor: (Width: 1062, Height: 100, Bottom: 25);
 
     Group #EasyWaterContainer {
-        LayoutMode: Left;
-        
-        Group #EasyWaterIcon {
-            Anchor: (Left: 0, Width: 24, Height: 24, Right: 4, Top: -8);
-            Background: "WaterIcon.png";
+        Anchor: (Left: 962, Top: 0, Width: 100, Height: 100);
+        Background: "RuneBase.png";
+
+        CircularProgressBar #EasyWaterPreviewBar {
+            Anchor: (Width: 100, Height: 100);
+            MaskTexturePath: @EasyWaterRuneMask;
+            Color: #2B4E8C;
+            Value: 0;
+            Visible: true;
         }
 
-        Group {
-            Anchor: (Left: 0, Width: 318, Height: 12);
-            Background: "WaterBackground.png";
+        CircularProgressBar #EasyWaterThirstBar {
+            Anchor: (Width: 100, Height: 100);
+            MaskTexturePath: @EasyWaterRuneMask;
+            Color: #5FA8FF;
+            Visible: true;
+        }
 
-            ProgressBar #EasyWaterPreviewBar {
-                Anchor: (Width: 318, Height: 12);
-                BarTexturePath: @EasyWaterPreviewBarFill;
-                Value: 0;
-                Visible: true;
-            }
-            ProgressBar #EasyWaterThirstBar {
-                Anchor: (Width: 318, Height: 12);
-                BarTexturePath: @EasyWaterAdventureBarFill;
-                Visible: true;
-            }
-            ProgressBar #EasyWaterCreativeThirstBar {
-                Anchor: (Width: 318, Height: 12);
-                BarTexturePath: @EasyWaterCreativeBarFill;
-                Visible: false;
-            }
-            ProgressBar #EasyWaterProgressBarEffect {
-                Anchor: (Width: 318, Height: 12);
-                BarTexturePath: "WaterBarEffect.png";
-            }
+        CircularProgressBar #EasyWaterCreativeThirstBar {
+            Anchor: (Width: 100, Height: 100);
+            MaskTexturePath: @EasyWaterRuneMask;
+            Color: #7FD4E5;
+            Visible: false;
+        }
+
+        Group #EasyWaterIcon {
+            Anchor: (Width: 24, Height: 24, Left: 38, Top: 38);
+            Background: "WaterIcon.png";
         }
     }
 }

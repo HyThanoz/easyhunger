@@ -4,7 +4,7 @@
         "Name": "server.items.EasyHunger_Flask_Empty.name",
         "Description": "server.items.EasyHunger_Flask_Empty.description"
     },
-    "HeldScale": 0.35,
+    "Scale": 0.35,
     "MaxStack": 16,
     "Categories": [
         "Items.Survival"

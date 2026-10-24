@@ -18,10 +18,30 @@ import java.lang.reflect.Field;
 import java.util.Arrays;
 
 public class EasyHungerUtils {
+    /**
+     * Minimum hunger/thirst change (in stat units) worth a HUD network packet from
+     * high-frequency sources (block break, jump). The bar is 318px for a 0..MaxHunger(50)
+     * range, so one visible pixel ≈ 0.157 units — deltas below this are invisible.
+     * Eating/death/starvation ticks produce larger deltas and always pass.
+     */
+    public static final float HUD_VISIBLE_DELTA = 0.15f;
+
+    /** Valor que devuelve IndexedLookupTableAssetMap.getIndex para una clave que no existe. */
+    private static final int MISSING_ASSET_INDEX = Integer.MIN_VALUE;
+
     private static EntityEffect starvingEntityEffect;
     private static EntityEffect hungryEntityEffect;
     private static EntityEffect dehydratedEntityEffect;
-    private static DamageCause starvationDamageCause;
+
+    /**
+     * DamageCause de hambre y sed. Son inmutables (sin setters) y Damage solo lee su getId()
+     * para buscar el indice en el asset map (javap 0.6.8), asi que basta una instancia de cada.
+     * Van en un holder para crearse en el primer uso, como antes.
+     */
+    private static final class DamageCauses {
+        static final DamageCause STARVATION = new DamageCause("Starvation", "Starvation", false, true, true);
+        static final DamageCause THIRST = new DamageCause("Thirst", "Thirst", false, true, true);
+    }
 
     public static final String starvingEntityEffectId = "Starving";
     public static final String hungryEntityEffectId = "Hungry";
@@ -57,15 +77,17 @@ public class EasyHungerUtils {
         return hungryEntityEffect;
     }
 
+    /**
+     * Compara por indice de asset, sin reflexion. EffectControllerComponent asigna a cada efecto
+     * activo el indice de su entityEffectId (getIndex) y descarta los que no tienen asset, asi que
+     * comparar el indice equivale a comparar el id. Se resuelve en cada llamada (es una busqueda
+     * en un mapa) para no guardar un indice viejo si los assets se recargan.
+     */
     public static boolean activeEntityEffectIs(ActiveEntityEffect effect, String entityEffectId) {
-        try {
-            Field f = ActiveEntityEffect.class.getDeclaredField("entityEffectId");
-            f.setAccessible(true);
-            String id = (String) f.get(effect);
-            return id.equals(entityEffectId);
-        } catch (NoSuchFieldException | IllegalAccessException e) {
-            throw new RuntimeException(e);
-        }
+        if (effect == null) return false;
+        int index = EntityEffect.getAssetMap().getIndex(entityEffectId);
+        if (index == MISSING_ASSET_INDEX) return false;
+        return effect.getEntityEffectIndex() == index;
     }
 
     public static boolean activeEntityEffectIsStarving(ActiveEntityEffect effect) {
@@ -74,10 +96,6 @@ public class EasyHungerUtils {
 
     public static boolean activeEntityEffectIsHungry(ActiveEntityEffect effect) {
         return activeEntityEffectIs(effect, hungryEntityEffectId);
-    }
-
-    public static boolean activeEntityEffectIsHungerRelated(ActiveEntityEffect effect) {
-        return activeEntityEffectIsStarving(effect) || activeEntityEffectIsHungry(effect);
     }
 
     @NonNullDecl
@@ -152,21 +170,22 @@ public class EasyHungerUtils {
         if (hungerComponent == null || playerRef == null) return;
 
         hungerComponent.setHungerLevel(hungerLevel);
+
+        // Skip the HUD packet for sub-pixel changes (block break / jump spam); the component
+        // keeps the exact value, and the send fires once the accumulated delta is visible.
+        if (Math.abs(hungerLevel - hungerComponent.getLastSentHunger()) < HUD_VISIBLE_DELTA) return;
+        hungerComponent.setLastSentHunger(hungerLevel);
         EasyHungerHud.updatePlayerHungerLevel(playerRef, hungerLevel);
     }
 
     @NonNullDecl
     public static DamageCause getStarvationDamageCause() {
-        // We recreate this every time to ensure config changes (like death message) are applied instantly
-        // Hytale's DamageCause is likely lightweight enough.
-        String message = "Starvation";
-        return new DamageCause("Starvation", message, false, true, true);
+        return DamageCauses.STARVATION;
     }
 
     @NonNullDecl
     public static DamageCause getThirstDamageCause() {
-        String message = "Thirst";
-        return new DamageCause("Thirst", message, false, true, true);
+        return DamageCauses.THIRST;
     }
 }
 

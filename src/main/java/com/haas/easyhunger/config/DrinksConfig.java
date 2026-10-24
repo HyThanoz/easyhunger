@@ -18,8 +18,10 @@ public class DrinksConfig {
     
     private static final KeyedCodec<Map<String, Float>> DRINK_VALUES = new KeyedCodec<>("DrinkValues", new MapCodec<>(Codec.FLOAT, LinkedHashMap::new));
     
+    // MapCodec entrega un mapa inmutable al cargar: se copia (en orden) para que put no lance
+    // UnsupportedOperationException. Misma regla que PlayerPrefsConfig.
     public static final BuilderCodec<DrinksConfig> CODEC = BuilderCodec.builder(DrinksConfig.class, DrinksConfig::new)
-            .addField(DRINK_VALUES, (c, v) -> c.drinkValues = v, DrinksConfig::getDrinkValues)
+            .append(DRINK_VALUES, (c, v) -> c.drinkValues = (v == null) ? null : new LinkedHashMap<>(v), DrinksConfig::getDrinkValues).add()
             .build();
     
     private Map<String, Float> drinkValues;

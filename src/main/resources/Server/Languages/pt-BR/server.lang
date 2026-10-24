@@ -16,5 +16,5 @@ items.EasyHunger_Flask_Empty.description = Um frasco vazio que pode ser enchido 
 items.EasyHunger_Flask_Filled.name = Frasco com Água
 items.EasyHunger_Flask_Filled.description = Um frasco cheio de água fresca. Beba para saciar a sede.
 
-server.items.EasyHunger_Template_Waterskin.name = Odre Template
-server.items.EasyHunger_Template_Waterskin.description = Carregue água com você
+items.EasyHunger_Template_Waterskin.name = Odre Template
+items.EasyHunger_Template_Waterskin.description = Carregue água com você

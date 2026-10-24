@@ -1,0 +1,42 @@
+// HUD de hambre en BARRA (HudEstilo BARRAS, 1.5.20). Va encima de la vida nativa y copia su anatomia
+// (Health.ui del cliente 0.7.1) icono de 24 a la izquierda, 4 de aire y barra de 318 x 12.
+// La raiz lleva solo Bottom + Width + Height y el cliente la centra como a la vida (ancho del hotbar 702).
+// La fila de la vida va en Bottom 120 y su icono sube 8 por encima, hasta 140; esta fila va en 146.
+// Mismos ids que Hunger.ui, asi el Java no cambia segun el estilo.
+// 1.5.21 texturas volteadas, la punta inclinada va en el borde de afuera como la de la vida.
+// Solo ASCII. Sin dos puntos en los comentarios.
+
+Group #EasyHungerRoot {
+    Anchor: (Width: 702, Height: 24, Bottom: 142);
+
+    Group #EasyHungerContainer {
+        Anchor: (Left: 0, Top: 0, Width: 702, Height: 24);
+
+        Group #EasyHungerIcon {
+            Anchor: (Left: 0, Top: 0, Width: 24, Height: 24);
+            Background: "HungerIcon.png";
+        }
+
+        Group {
+            Anchor: (Left: 28, Top: 8, Width: 318, Height: 12);
+            Background: "HungerBackground.png";
+
+            ProgressBar #EasyHungerPreviewBar {
+                Anchor: (Width: 318, Height: 12);
+                BarTexturePath: "HungerBarFillPreview.png";
+                Value: 0;
+            }
+
+            ProgressBar #EasyHungerHungerBar {
+                Anchor: (Width: 318, Height: 12);
+                BarTexturePath: "HungerBarFill.png";
+            }
+
+            ProgressBar #EasyHungerCreativeHungerBar {
+                Anchor: (Width: 318, Height: 12);
+                BarTexturePath: "CreativeHungerBarFill.png";
+                Visible: false;
+            }
+        }
+    }
+}

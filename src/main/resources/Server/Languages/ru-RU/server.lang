@@ -16,5 +16,5 @@ items.EasyHunger_Flask_Empty.description = Пустая фляга, котору
 items.EasyHunger_Flask_Filled.name = Фляга с Водой
 items.EasyHunger_Flask_Filled.description = Фляга, полная свежей воды. Выпейте, чтобы утолить жажду.
 
-server.items.EasyHunger_Template_Waterskin.name = Шаблон Бурдюка
-server.items.EasyHunger_Template_Waterskin.description = Берите воду с собой
+items.EasyHunger_Template_Waterskin.name = Шаблон Бурдюка
+items.EasyHunger_Template_Waterskin.description = Берите воду с собой

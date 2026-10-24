@@ -3,6 +3,7 @@ package com.haas.easyhunger.interactions;
 import com.haas.easyhunger.EasyHunger;
 import com.haas.easyhunger.components.HungerComponent;
 import com.haas.easyhunger.ui.EasyHungerHud;
+import com.haas.easyhunger.utils.WorldGate;
 
 import com.hypixel.hytale.codec.Codec;
 import com.hypixel.hytale.codec.KeyedCodec;
@@ -42,23 +43,33 @@ public class ConsumeFoodInteraction extends SimpleInstantInteraction {
     protected void firstRun(@Nonnull InteractionType type, 
                            @Nonnull InteractionContext context, 
                            @Nonnull CooldownHandler cooldownHandler) {
+        // Fuera del try para poder limpiar la vista previa en el finally, salga por donde salga.
+        PlayerRef playerRef = null;
         try {
             Ref<EntityStore> entityRef = context.getEntity();
             if (entityRef == null || !entityRef.isValid()) {
                 context.getState().state = InteractionState.Failed;
                 return;
             }
-            
+
             Store<EntityStore> store = entityRef.getStore();
-            PlayerRef playerRef = store.getComponent(entityRef, PlayerRef.getComponentType());
+            playerRef = store.getComponent(entityRef, PlayerRef.getComponentType());
             
             if (playerRef == null) {
                 context.getState().state = InteractionState.Failed;
                 return;
             }
             
+            // Mundo excluido: el mod queda inerte, comer no restaura nada. Se marca Finished (no
+            // Failed) para que el item se consuma con normalidad y la interaccion no se quede
+            // colgada — simplemente no tocamos el nivel de hambre.
+            if (!WorldGate.isActive(store)) {
+                context.getState().state = InteractionState.Finished;
+                return;
+            }
+
             HungerComponent hunger = store.getComponent(entityRef, HungerComponent.getComponentType());
-            
+
             if (hunger != null) {
                 float max = EasyHunger.get().getConfig().getMaxHunger();
                 if (hunger.getHungerLevel() < max) {
@@ -76,17 +87,26 @@ public class ConsumeFoodInteraction extends SimpleInstantInteraction {
                     
                     hunger.feed(restoreAmount);
                     
-                    // Update HUD and clear preview
+                    // Update HUD (la vista previa se limpia en el finally)
                     EasyHungerHud.updatePlayerHungerLevel(playerRef, hunger.getHungerLevel());
-                    EasyHungerHud.updatePlayerHungerPreview(playerRef, 0.0f);
                 }
             }
-            
+
             context.getState().state = InteractionState.Finished;
-            
+
         } catch (Exception e) {
-            EasyHunger.logInfo("CONSUME FOOD ERROR: " + e.toString());
+            EasyHunger.LOGGER.at(java.util.logging.Level.WARNING).withCause(e).log("CONSUME FOOD ERROR");
             context.getState().state = InteractionState.Failed;
+        } finally {
+            // Antes solo se limpiaba si el hambre subia: con la comida sin configurar o el hambre
+            // al maximo, el anillo de vista previa se quedaba pegado hasta la siguiente comida.
+            if (playerRef != null) {
+                try {
+                    EasyHungerHud.updatePlayerHungerPreview(playerRef, 0.0f);
+                } catch (Exception e) {
+                    EasyHunger.LOGGER.at(java.util.logging.Level.WARNING).withCause(e).log("CONSUME FOOD PREVIEW ERROR");
+                }
+            }
         }
     }
 }

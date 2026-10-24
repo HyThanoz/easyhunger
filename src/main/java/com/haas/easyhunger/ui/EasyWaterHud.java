@@ -9,13 +9,17 @@ import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.haas.easyhunger.EasyHunger;
 import com.haas.easyhunger.components.ThirstComponent;
 import com.haas.easyhunger.config.EasyHungerConfig;
-import com.haas.easyhunger.config.HudPosition;
 import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
 
-import java.util.WeakHashMap;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class EasyWaterHud extends CustomUIHud {
-    static private final WeakHashMap<PlayerRef, EasyWaterHud> hudMap = new WeakHashMap<>();
+    /**
+     * Keyed by player UUID (not PlayerRef) so lookups are reliable regardless of which
+     * PlayerRef instance the caller holds — PlayerRef does not override equals/hashCode.
+     */
+    static private final ConcurrentHashMap<UUID, EasyWaterHud> hudMap = new ConcurrentHashMap<>();
     static public final String hudIdentifier = "com.haas.easyhunger.hud.water";
     private GameMode gameMode;
     private float thirstLevel;
@@ -23,18 +27,18 @@ public class EasyWaterHud extends CustomUIHud {
     private boolean visible = true;
 
     public EasyWaterHud(@NonNullDecl PlayerRef playerRef, GameMode gameMode, float thirstLevel) {
-        super(playerRef);
+        super(playerRef, hudIdentifier);
         this.gameMode = gameMode;
         this.thirstLevel = thirstLevel;
-        hudMap.put(playerRef, this);
+        hudMap.put(playerRef.getUuid(), this);
     }
 
     @Override
     protected void build(@NonNullDecl UICommandBuilder uiCommandBuilder) {
         EasyHungerConfig config = EasyHunger.get().getConfig();
-        HudPosition hudPosition = config.getHudPosition();
-        uiCommandBuilder.append("HUD/Hunger/Water.ui");
-        updateHudPosition(uiCommandBuilder, hudPosition);
+        // 1.5.20: ANILLOS o BARRAS (HudEstilo); los dos .ui tienen los mismos ids. Cambiar de estilo pide relog.
+        uiCommandBuilder.append(RuneLayout.uiFile(false));
+        updateHudPosition(uiCommandBuilder);
         updateGameMode(uiCommandBuilder, this.gameMode);
         updateThirstLevel(uiCommandBuilder, this.thirstLevel);
         updateVisibility(uiCommandBuilder, this.visible);
@@ -45,39 +49,11 @@ public class EasyWaterHud extends CustomUIHud {
         uiCommandBuilder.set("#EasyWaterContainer.Visible", this.visible);
     }
 
-    protected void updateHudPosition(UICommandBuilder uiCommandBuilder, HudPosition hudPosition) {
-        int DefaultItemSlotSize = 74;
-        int DefaultItemSlotsPerRow = 9;
-        int DefaultItemGridPadding = 2;
-        int HotbarSlotSpacingHud = 4;
-        
-        int HotbarHeight = DefaultItemSlotSize + (2 * DefaultItemGridPadding);
-        int HotbarWidthHud = (DefaultItemSlotSize * DefaultItemSlotsPerRow) + (HotbarSlotSpacingHud * DefaultItemSlotsPerRow);
-
-        int BottomMargin = 30;
-        int ContainerMargin = 6;
-        int InventoryClosedContainerMargin = BottomMargin + ContainerMargin;
-        
-        int calculatedBottomOffset = InventoryClosedContainerMargin + HotbarHeight + 6;
-
-        // Offset for Water Bar to be ABOVE Hunger Bar
-        // Assuming Hunger Bar height is 12 + some padding.
-        int STACK_OFFSET = 14; 
-
-        Anchor anchor = new Anchor();
-        
-        switch (hudPosition) {
-            case TOP:
-                 anchor.setWidth(Value.of(HotbarWidthHud));
-                 anchor.setBottom(Value.of(InventoryClosedContainerMargin + HotbarHeight + 32));
-                 break;
-            case BOTTOM:
-                anchor.setWidth(Value.of(HotbarWidthHud));
-                anchor.setBottom(Value.of(4));
-                break;
-        }
-
-        uiCommandBuilder.setObject("#EasyWaterContainer.Anchor", anchor);
+    protected void updateHudPosition(UICommandBuilder uiCommandBuilder) {
+        // Geometria compartida con EasyHungerHud: ver RuneLayout (raiz centrada, 1.5.20).
+        uiCommandBuilder.setObject("#EasyWaterRoot.Anchor", RuneLayout.rootAnchor());
+        Anchor box = RuneLayout.containerAnchor(false);
+        if (box != null) uiCommandBuilder.setObject("#EasyWaterContainer.Anchor", box);
     }
 
     protected void updateThirstLevel(UICommandBuilder uiCommandBuilder, float thirstLevel) {
@@ -86,8 +62,7 @@ public class EasyWaterHud extends CustomUIHud {
         float barValue = thirstLevel / max;
         uiCommandBuilder.set("#EasyWaterThirstBar.Value", barValue);
         uiCommandBuilder.set("#EasyWaterCreativeThirstBar.Value", barValue);
-        uiCommandBuilder.set("#EasyWaterProgressBarEffect.Value", barValue);
-        
+
         // Also update preview if active
         if (this.previewThirstRestoration != 0.0f) {
             updateThirstPreview(uiCommandBuilder, this.previewThirstRestoration);
@@ -96,16 +71,16 @@ public class EasyWaterHud extends CustomUIHud {
 
     protected void updateThirstPreview(UICommandBuilder uiCommandBuilder, float thirstRestoration) {
         this.previewThirstRestoration = thirstRestoration;
-        
+
         if (thirstRestoration == 0.0f) {
             uiCommandBuilder.set("#EasyWaterPreviewBar.Value", 0.0f);
             return;
         }
-        
+
         float max = EasyHunger.get().getConfig().getMaxThirst();
         float expectedLevel = Math.min(this.thirstLevel + thirstRestoration, max);
         float previewBarValue = expectedLevel / max;
-        
+
         uiCommandBuilder.set("#EasyWaterPreviewBar.Value", previewBarValue);
     }
 
@@ -119,45 +94,61 @@ public class EasyWaterHud extends CustomUIHud {
         uiCommandBuilder.set("#EasyWaterCreativeThirstBar.Visible", gameMode == GameMode.Creative);
     }
 
-    static public void updatePlayerThirstLevel(@NonNullDecl PlayerRef playerRef, float thirstLevel) {
-        EasyWaterHud hud = hudMap.get(playerRef);
-        if (hud == null) {
-            EasyCombinedHud.updatePlayerThirstLevel(playerRef, thirstLevel);
-            return;
+    /** true si este jugador tiene HUD de sed registrado. Ver {@link EasyHungerHud#hasHud}. */
+    static public boolean hasHud(@NonNullDecl PlayerRef playerRef) {
+        UUID uuid = playerRef.getUuid();
+        return uuid != null && hudMap.containsKey(uuid);
+    }
+
+    /** Call on PlayerDisconnectEvent to release the map entry for this player. */
+    static public void removePlayer(@NonNullDecl PlayerRef playerRef) {
+        UUID uuid = playerRef.getUuid();
+        if (uuid != null) hudMap.remove(uuid);
+    }
+
+    /**
+     * Quita la barra del cliente al llegar a un mundo excluido (ver {@code WorldGate}).
+     * Motivo de no usar HudManager y detalle del paquete: {@link EasyHungerHud#forceClear}.
+     */
+    static public void forceClear(@NonNullDecl PlayerRef playerRef) {
+        removePlayer(playerRef);
+        try {
+            com.hypixel.hytale.server.core.io.PacketHandler handler = playerRef.getPacketHandler();
+            if (handler == null) return;
+            handler.writeNoCache(new com.hypixel.hytale.protocol.packets.interface_.CustomHud(
+                    hudIdentifier, 0, true, null));
+        } catch (Exception ignored) {
+            // El jugador puede haberse desconectado entre la comprobacion y el envio.
         }
+    }
+
+    static public void updatePlayerThirstLevel(@NonNullDecl PlayerRef playerRef, float thirstLevel) {
+        EasyWaterHud hud = hudMap.get(playerRef.getUuid());
+        if (hud == null) return;
         UICommandBuilder uiCommandBuilder = new UICommandBuilder();
         hud.updateThirstLevel(uiCommandBuilder, thirstLevel);
         hud.update(false, uiCommandBuilder);
     }
-    
+
     static public void updatePlayerThirstPreview(@NonNullDecl PlayerRef playerRef, float thirstRestoration) {
-        EasyWaterHud hud = hudMap.get(playerRef);
-        if (hud == null) {
-            EasyCombinedHud.updatePlayerThirstPreview(playerRef, thirstRestoration);
-            return;
-        }
+        EasyWaterHud hud = hudMap.get(playerRef.getUuid());
+        if (hud == null) return;
         UICommandBuilder uiCommandBuilder = new UICommandBuilder();
         hud.updateThirstPreview(uiCommandBuilder, thirstRestoration);
         hud.update(false, uiCommandBuilder);
     }
-    
+
     static public void updatePlayerGameMode(@NonNullDecl PlayerRef playerRef, GameMode gameMode) {
-        EasyWaterHud hud = hudMap.get(playerRef);
-        if (hud == null) {
-            // Combined HUD handles both game modes
-            return;
-        }
+        EasyWaterHud hud = hudMap.get(playerRef.getUuid());
+        if (hud == null) return;
         UICommandBuilder uiCommandBuilder = new UICommandBuilder();
         hud.updateGameMode(uiCommandBuilder, gameMode);
         hud.update(false, uiCommandBuilder);
     }
 
     static public void updatePlayerHudVisibility(@NonNullDecl PlayerRef playerRef, boolean visible) {
-        EasyWaterHud hud = hudMap.get(playerRef);
-        if (hud == null) {
-            // Combined HUD handles visibility for both
-            return;
-        }
+        EasyWaterHud hud = hudMap.get(playerRef.getUuid());
+        if (hud == null) return;
         UICommandBuilder uiCommandBuilder = new UICommandBuilder();
         hud.updateVisibility(uiCommandBuilder, visible);
         hud.update(false, uiCommandBuilder);

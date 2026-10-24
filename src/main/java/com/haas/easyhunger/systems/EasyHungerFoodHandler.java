@@ -3,6 +3,7 @@ package com.haas.easyhunger.systems;
 import com.haas.easyhunger.EasyHunger;
 import com.haas.easyhunger.EasyHungerUtils;
 import com.haas.easyhunger.components.HungerComponent;
+import com.haas.easyhunger.utils.WorldGate;
 import com.hypixel.hytale.component.ArchetypeChunk;
 import com.hypixel.hytale.component.CommandBuffer;
 import com.hypixel.hytale.component.ComponentAccessor;
@@ -12,17 +13,13 @@ import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.component.query.Query;
 import com.hypixel.hytale.component.system.EntityEventSystem;
 import com.hypixel.hytale.server.core.entity.entities.Player;
-import com.hypixel.hytale.server.core.inventory.InventoryChangeEvent;
+import com.hypixel.hytale.server.core.event.events.ecs.InventoryChangeEvent;
+import com.hypixel.hytale.server.core.inventory.transaction.MoveTransaction;
 import com.hypixel.hytale.server.core.inventory.transaction.Transaction;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.logging.Level;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import com.hypixel.hytale.server.core.asset.type.item.config.Item;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -31,10 +28,6 @@ public class EasyHungerFoodHandler extends EntityEventSystem<EntityStore, Invent
 
 
 
-    private static final Pattern QUANTITY_BEFORE_PATTERN = Pattern.compile("slotBefore=ItemStack\\{[^}]*quantity=(\\d+)");
-    private static final Pattern QUANTITY_AFTER_PATTERN = Pattern.compile("slotAfter=ItemStack\\{[^}]*quantity=(\\d+)");
-    private static final Pattern ITEM_ID_PATTERN = Pattern.compile("itemId=([^,}]+)");
-    
     private final com.hypixel.hytale.component.ComponentType<com.hypixel.hytale.server.core.universe.world.storage.EntityStore, com.haas.easyhunger.components.HungerComponent> hungerComponentType;
 
     public EasyHungerFoodHandler(com.hypixel.hytale.component.ComponentType<com.hypixel.hytale.server.core.universe.world.storage.EntityStore, com.haas.easyhunger.components.HungerComponent> hungerComponentType) {
@@ -54,6 +47,9 @@ public class EasyHungerFoodHandler extends EntityEventSystem<EntityStore, Invent
         if (this.hungerComponentType == null) {
              return;
         }
+        // Mundo excluido (Hub): el estado se congela, comer no restaura hambre. Igual que los
+        // sistemas y las interacciones del mod (ver WorldGate).
+        if (!WorldGate.isActive(store)) return;
         try {
             Player player = archetypeChunk.getComponent(index, Player.getComponentType());
             if (player == null) return;
@@ -61,99 +57,86 @@ public class EasyHungerFoodHandler extends EntityEventSystem<EntityStore, Invent
             Transaction transaction = event.getTransaction();
             if (transaction == null) return;
 
+            // Comprobacion de TIPO primero: mover un item es el caso mas frecuente con diferencia
+            // y sale sin asignar una sola String. Antes se serializaba la transaccion entera con
+            // toString() y se buscaba "MoveTransaction" como subcadena.
+            if (transaction instanceof MoveTransaction<?>) return;
+
+            // Despues, la comprobacion ESTRUCTURAL: sin un item consumido que sea eternal_meat
+            // no se hace nada mas abajo, asi que se sale aqui sin serializar la transaccion.
+            // Las comprobaciones por cadena de abajo se mantienen tal cual para los que pasan.
+            String itemId = getConsumedItemId(transaction);
+            if (itemId == null || !itemId.toLowerCase().contains("eternal_meat")) return;
+
+            // El toString() solo se paga si se consumio un eternal_meat.
             String transactionInfo = transaction.toString();
-            String lowerInfo = transactionInfo.toLowerCase();
-            
-            // Filter out MoveTransactions (Drops, Item Movement) safely without logging
-            if (transactionInfo.contains("MoveTransaction")) {
-                 return; 
-            }
+            if (transactionInfo.contains("query=null")) return;
 
-            // Filter null queries safely without logging
-            if (transactionInfo.contains("query=null")) {
+            // Filtro historico por cadena: se conserva para no cambiar que transacciones cuentan.
+            if (!transactionInfo.toLowerCase().contains("eternal_meat")) return;
+            
+            // Se lee del componente de la entidad. Antes habia que sacar el PlayerRef con un
+            // ComponentAccessor casteado a mano solo para usar su UUID como clave del mapa
+            // estatico; con el estado en la entidad basta con leerlo del chunk.
+            com.haas.easyhunger.components.PlayerActionTimes placeTimes =
+                    archetypeChunk.getComponent(index, com.haas.easyhunger.components.PlayerActionTimes.getComponentType());
+            // If a block was placed in the last BLOCK_PLACE_GUARD_MS, abort the Food consumption Handler for this inventory change
+            if (placeTimes != null && placeTimes.lastBlockPlace != 0L
+                    && System.currentTimeMillis() - placeTimes.lastBlockPlace < com.haas.easyhunger.components.PlayerActionTimes.BLOCK_PLACE_GUARD_MS) {
                 return;
             }
 
-            // QUICK EXIT: If the transaction doesn't even mention eternal meat, bail out immediately!
-            // This prevents parsing and looping through standard foods like Pizza, perfectly optimizing performance snippet.
-            if (!lowerInfo.contains("eternal_meat")) {
-                return;
-            }
-            
+            // itemId ya es un eternal_meat: se comprobo arriba, antes del toString().
+            Item itemAsset = Item.getAssetMap().getAsset(itemId);
+            if (itemAsset == null || !itemAsset.isConsumable()) return;
+
+            float hungerRestore = EasyHunger.get().getFoodsConfig().getFoodValue(itemId);
+            if (hungerRestore <= 0) return;
+
             try {
                 var entityStore = player.getReference().getStore();
                 ComponentAccessor accessor = (entityStore instanceof ComponentAccessor) ? (ComponentAccessor) entityStore : (ComponentAccessor) (Object) entityStore;
-                PlayerRef playerRef = (PlayerRef) accessor.getComponent((Ref) player.getReference(), (ComponentType) (Object) PlayerRef.getComponentType());
-                
-                if (playerRef != null) {
-                    Long lastPlace = com.haas.easyhunger.systems.EasyHungerBlockPlaceSystem.LAST_PLACE_TIME.get(playerRef.getUuid());
-                    // If a block was placed in the last 100ms, abort the Food consumption Handler for this inventory change
-                    if (lastPlace != null && System.currentTimeMillis() - lastPlace < 100) {
-                        return;
-                    }
-                }
-            } catch (Exception e) {}
 
-            // EasyHunger.logInfo("[Debug FoodHandler] Eternal Meat Transaction Detected: " + transactionInfo);
+                HungerComponent hunger = (HungerComponent) accessor.getComponent(
+                    (Ref) player.getReference(),
+                    (ComponentType) (Object) this.hungerComponentType
+                );
 
-            String itemId = getConsumedItemId(transaction);
-            
-            if (itemId != null) {
-                // EasyHunger.logInfo("[Debug FoodHandler] Item Extracted Structurally: " + itemId);
-                
-                // Only handle specific infinite food items (e.g., Eternal Meat)
-                boolean isEternalMeat = itemId.toLowerCase().contains("eternal_meat");
-                
-                if (isEternalMeat) {
-                    Item itemAsset = Item.getAssetMap().getAsset(itemId);
-                    if (itemAsset != null && itemAsset.isConsumable()) {
-                        float hungerRestore = EasyHunger.get().getFoodsConfig().getFoodValue(itemId);
-                        
-                        if (hungerRestore > 0) {
-                             try {
-                                 var entityStore = player.getReference().getStore();
-                                 ComponentAccessor accessor = (entityStore instanceof ComponentAccessor) ? (ComponentAccessor) entityStore : (ComponentAccessor) (Object) entityStore;
-        
-                                 HungerComponent hunger = (HungerComponent) accessor.getComponent(
-                                     (Ref) player.getReference(), 
-                                     (ComponentType) (Object) this.hungerComponentType
-                                 );
-        
-                                if (hunger != null) {
-                                    float current = hunger.getHungerLevel();
-                                    float maxHunger = EasyHunger.get().getConfig().getMaxHunger();
-                                    
-                                    if (current < maxHunger) { 
-                                       hunger.feed(hungerRestore);
-                                       
-                                       try {
-                                           if (accessor != null) {
-                                               com.hypixel.hytale.server.core.universe.PlayerRef playerRef = 
-                                                    (com.hypixel.hytale.server.core.universe.PlayerRef) accessor.getComponent(
-                                                       (Ref) player.getReference(), 
-                                                       (ComponentType) (Object) com.hypixel.hytale.server.core.universe.PlayerRef.getComponentType()
-                                                    );
-                                                    
-                                               if (playerRef != null) {
-                                                   com.haas.easyhunger.ui.EasyHungerHud.updatePlayerHungerLevel(
-                                                       playerRef, 
-                                                       hunger.getHungerLevel()
-                                                   );
-                                               }
-                                           }
-                                       } catch (Exception e) {}
-                                    }
+                if (hunger != null) {
+                    float current = hunger.getHungerLevel();
+                    float maxHunger = EasyHunger.get().getConfig().getMaxHunger();
+
+                    if (current < maxHunger) {
+                        hunger.feed(hungerRestore);
+
+                        try {
+                            if (accessor != null) {
+                                com.hypixel.hytale.server.core.universe.PlayerRef playerRef =
+                                    (com.hypixel.hytale.server.core.universe.PlayerRef) accessor.getComponent(
+                                        (Ref) player.getReference(),
+                                        (ComponentType) (Object) com.hypixel.hytale.server.core.universe.PlayerRef.getComponentType()
+                                    );
+
+                                if (playerRef != null) {
+                                    com.haas.easyhunger.ui.EasyHungerHud.updatePlayerHungerLevel(
+                                        playerRef,
+                                        hunger.getHungerLevel()
+                                    );
                                 }
-                             } catch (Exception e) {
-                                  EasyHunger.get().getLogger().at(Level.SEVERE).log("Error applying hunger: " + e.toString());
-                             }
+                            }
+                        } catch (Exception e) {
+                            // El hambre ya subio; solo fallo el refresco de la barra.
+                            EasyHunger.get().getLogger().at(Level.WARNING).withCause(e).log("Error updating hunger HUD");
                         }
                     }
                 }
+            } catch (Exception e) {
+                EasyHunger.get().getLogger().at(Level.SEVERE).withCause(e).log("Error applying hunger");
             }
 
-        } catch (Throwable e) {
-            EasyHunger.get().getLogger().at(Level.SEVERE).log("Error in EasyHungerFoodHandler: " + e.getMessage());
+        } catch (Exception e) {
+            // Exception y no Throwable: un Error (OOM, StackOverflow) no se debe tragar aqui.
+            EasyHunger.get().getLogger().at(Level.SEVERE).withCause(e).log("Error in EasyHungerFoodHandler");
         }
     }
 

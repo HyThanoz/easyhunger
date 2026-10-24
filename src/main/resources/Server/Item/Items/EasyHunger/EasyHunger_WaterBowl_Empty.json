@@ -29,7 +29,7 @@
             -2
         ]
     },
-    "HeldScale": 1.0,
+    "Scale": 1.0,
     "MaxStack": 8,
     "Categories": [
         "Items.Survival"

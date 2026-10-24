@@ -1,41 +1,57 @@
-﻿@EasyHungerAdventureBarFill = "HungerBarFill.png";
-@EasyHungerCreativeBarFill = "CreativeHungerBarFill.png";
-@EasyHungerPreviewBarFill = "HungerBarFillPreview.png";
+// HUD de hambre - diseno "Runa" de MyTale (1.5.0). Posicion en espejo del espacio Z (1.5.20).
+//
+// El anillo es un CircularProgressBar: barre Color en radial y RuneMask.png
+// recorta la banda. El color va aqui, no en la textura, asi que una sola
+// mascara sirve para los tres anillos y para el HUD de sed.
+//
+// OJO CON LA CAJA DE 100 (no es estetica, es obligatoria):
+// el relleno del CircularProgressBar NO es un disco, es un cuadrado girado
+// inscrito en la caja. En las diagonales solo llega al 70.7% del semilado, asi
+// que el aro tiene que quedar DENTRO de ese radio o salen cuatro cunas en cruz.
+// La moneda visible mide 64; los 18 px de borde son transparentes y solo
+// existen para que el rombo tape el aro.
+//
+// POSICION (1.5.20) la raiz #EasyHungerRoot lleva solo Bottom + Width + Height (Java) y el cliente la
+// CENTRA como al hotbar, asi que la distancia al hotbar es la misma en cualquier resolucion. Antes iba
+// pegada al borde derecho de la pantalla y en pantallas mas angostas o mas anchas se corria. Java pone
+// la caja a la derecha del hotbar, en espejo del espacio Z (ver RuneLayout).
+//
+// Orden = profundidad: lo de abajo se pinta primero. Preview va DEBAJO del
+// valor real para que al comer asome solo el trozo que se va a rellenar.
 
-Group {
-    LayoutMode: Bottom;
+@EasyHungerRuneMask = "RuneMask.png";
+
+Group #EasyHungerRoot {
+    Anchor: (Width: 1062, Height: 100, Bottom: 25);
 
     Group #EasyHungerContainer {
-        LayoutMode: Right;
-        
-        Group {
-            Anchor: (Width: 318, Height: 12);
-            Background: "HungerBackground.png";
+        Anchor: (Left: 890, Top: 0, Width: 100, Height: 100);
+        Background: "RuneBase.png";
 
-            ProgressBar #EasyHungerPreviewBar {
-                Anchor: (Width: 318, Height: 12);
-                BarTexturePath: @EasyHungerPreviewBarFill;
-                Value: 0;
-                Visible: true;
-            }
-            ProgressBar #EasyHungerHungerBar {
-                Anchor: (Width: 318, Height: 12);
-                BarTexturePath: @EasyHungerAdventureBarFill;
-                Visible: true;
-            }
-            ProgressBar #EasyHungerCreativeHungerBar {
-                Anchor: (Width: 318, Height: 12);
-                BarTexturePath: @EasyHungerCreativeBarFill;
-                Visible: false;
-            }
-             ProgressBar #EasyHungerProgressBarEffect {
-                Anchor: (Width: 318, Height: 12);
-                BarTexturePath: "HungerBarEffect.png";
-            }
+        CircularProgressBar #EasyHungerPreviewBar {
+            Anchor: (Width: 100, Height: 100);
+            MaskTexturePath: @EasyHungerRuneMask;
+            Color: #7A5A2E;
+            Value: 0;
+            Visible: true;
+        }
+
+        CircularProgressBar #EasyHungerHungerBar {
+            Anchor: (Width: 100, Height: 100);
+            MaskTexturePath: @EasyHungerRuneMask;
+            Color: #F2A33C;
+            Visible: true;
+        }
+
+        CircularProgressBar #EasyHungerCreativeHungerBar {
+            Anchor: (Width: 100, Height: 100);
+            MaskTexturePath: @EasyHungerRuneMask;
+            Color: #7FD4E5;
+            Visible: false;
         }
 
         Group #EasyHungerIcon {
-            Anchor: (Width: 24, Height: 24, Left: 4, Top: -8);
+            Anchor: (Width: 24, Height: 24, Left: 38, Top: 38);
             Background: "HungerIcon.png";
         }
     }

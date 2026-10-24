@@ -1,7 +1,7 @@
 package com.haas.easyhunger.utils;
 
 import com.hypixel.hytale.server.core.universe.PlayerRef;
-import com.hypixel.hytale.math.vector.Vector3d;
+import org.joml.Vector3d;
 import java.lang.reflect.Method;
 import java.util.UUID;
 
@@ -32,55 +32,69 @@ public class HungerProtectionUtils {
         }
     }
 
-    public static boolean isSafe(PlayerRef player) {
-        // Try to get world name from player via reflection
-        String worldName = "default";
-        try {
-            // Try multiple paths to get world name
-            // Path 1: player.getWorld().getName() using pure reflection
-            Method getWorldMethod = player.getClass().getMethod("getWorld");
-            Object world = getWorldMethod.invoke(player);
-            if (world != null) {
-                Method getNameMethod = world.getClass().getMethod("getName");
-                worldName = (String) getNameMethod.invoke(world);
-            }
-        } catch (Exception e) {
-            // Fallback to default - log once for debugging
-            // log("Could not get world name: " + e.getClass().getSimpleName());
-        }
-        return isSafe(player, worldName);
+    /**
+     * Removes the cached safe-zone status for a player. Call this when the player disconnects
+     * so the cache doesn't accumulate stale entries forever.
+     */
+    public static void invalidateCache(UUID uuid) {
+        if (uuid != null) safeCache.remove(uuid.toString());
     }
 
-    public static boolean isSafe(PlayerRef player, String worldName) {
+    // PlayerRef has no getWorld() in current server builds — probe for it ONCE instead of
+    // throwing+swallowing NoSuchMethodException on every call (isSafe runs per block break).
+    private static Method playerGetWorldMethod;
+    private static Method worldGetNameMethod;
+    private static boolean worldMethodProbed = false;
+
+    public static boolean isSafe(PlayerRef player) {
         if (player == null) return false;
-        
+
         UUID uuid = player.getUuid();
         if (uuid == null) return false;
 
-        // Check Cache
+        // Cache first — the world-name resolution below is only worth paying on a miss.
         String playerId = uuid.toString();
         long now = System.currentTimeMillis();
-        if (safeCache.containsKey(playerId)) {
-            CachedSafeStatus status = safeCache.get(playerId);
-            if (now - status.timestamp < CACHE_DURATION_MS) {
-                return status.isSafe;
-            }
+        CachedSafeStatus status = safeCache.get(playerId);
+        if (status != null && now - status.timestamp < CACHE_DURATION_MS) {
+            return status.isSafe;
         }
-        
-        // entry log (throttled? just log for now to confirm it runs)
-        // log("isSafe called for " + player.getName()); 
-        
+
         try {
-            boolean safe = checkSafety(player, worldName);
+            boolean safe = checkSafety(player, resolveWorldName(player));
             safeCache.put(playerId, new CachedSafeStatus(safe, now));
             return safe;
-            
         } catch (Throwable e) {
             log("Critical error in isSafe: " + e.getMessage());
             e.printStackTrace();
         }
-        
+
         return false;
+    }
+
+    private static String resolveWorldName(PlayerRef player) {
+        if (!worldMethodProbed) {
+            worldMethodProbed = true;
+            try {
+                playerGetWorldMethod = player.getClass().getMethod("getWorld");
+            } catch (Exception e) {
+                // Not available — every lookup falls back to "default" (historic behavior).
+            }
+        }
+        if (playerGetWorldMethod == null) return "default";
+
+        try {
+            Object world = playerGetWorldMethod.invoke(player);
+            if (world != null) {
+                if (worldGetNameMethod == null) {
+                    worldGetNameMethod = world.getClass().getMethod("getName");
+                }
+                String name = (String) worldGetNameMethod.invoke(world);
+                if (name != null) return name;
+            }
+        } catch (Exception ignored) {
+        }
+        return "default";
     }
 
     private static boolean checkSafety(PlayerRef player, String worldName) {
@@ -92,7 +106,13 @@ public class HungerProtectionUtils {
     private static boolean isSafeAreasProtected(PlayerRef player, String worldName) {
         try {
             // Lazy init
-            if (regionManager == null) {
+            // Se prueba UNA sola vez. Sin este guard, cuando SafeAreas no esta instalado
+            // -que es el caso en MyTale- el Class.forName de abajo lanzaba y se tragaba una
+            // ClassNotFoundException (con su stack trace) en CADA llamada: una por jugador y
+            // por segundo, indefinidamente. El campo safeAreasChecked llevaba declarado desde
+            // siempre pero nunca se habia cableado; la ruta gemela de Essentials si lo usa.
+            if (regionManager == null && !safeAreasChecked) {
+                safeAreasChecked = true;
                 try {
                     // Start Retry Logic for SafeAreas
                     Class<?> regionManagerClass = Class.forName("com.mcodelogic.safeareas.manager.RegionManager");
@@ -124,9 +144,9 @@ public class HungerProtectionUtils {
             // Uses the passed worldName directly
             java.util.Set<?> regions = (java.util.Set<?>) getRegionsAtMethod.invoke(api, 
                 worldName, 
-                pos.getX(), 
-                pos.getY(), 
-                pos.getZ()
+                pos.x(),
+                pos.y(),
+                pos.z()
             );
 
             if (regions != null && !regions.isEmpty()) {
@@ -187,6 +207,45 @@ public class HungerProtectionUtils {
         return false;
     }
 
+    // The spawn's world rarely changes; re-resolve at most every 30s instead of running the
+    // full Class.forName + field + method reflection chain on every uncached protection check.
+    private static String cachedSpawnWorldName;
+    private static long spawnWorldCachedAt = 0;
+    private static final long SPAWN_WORLD_TTL_MS = 30_000;
+
+    private static String getSpawnWorldName(String fallback) {
+        long now = System.currentTimeMillis();
+        if (cachedSpawnWorldName != null && now - spawnWorldCachedAt < SPAWN_WORLD_TTL_MS) {
+            return cachedSpawnWorldName;
+        }
+
+        String spawnWorldName = fallback;
+        try {
+            Class<?> essentialsClass = Class.forName("com.nhulston.essentials.Essentials");
+            Method getInstanceMethod = essentialsClass.getMethod("getInstance");
+            Object essentials = getInstanceMethod.invoke(null);
+
+            java.lang.reflect.Field storageField = essentialsClass.getDeclaredField("storageManager");
+            storageField.setAccessible(true);
+            Object storageManager = storageField.get(essentials);
+
+            Method getSpawnMethod = storageManager.getClass().getMethod("getSpawn");
+            Object spawn = getSpawnMethod.invoke(storageManager);
+
+            if (spawn != null) {
+                Method getWorldMethod = spawn.getClass().getMethod("getWorld");
+                String resolved = (String) getWorldMethod.invoke(spawn);
+                if (resolved != null) spawnWorldName = resolved;
+            }
+        } catch (Exception e) {
+            // Use fallback worldName
+        }
+
+        cachedSpawnWorldName = spawnWorldName;
+        spawnWorldCachedAt = now;
+        return spawnWorldName;
+    }
+
     private static void log(String message) {
         System.out.println("[EasyHunger-Protection] " + message);
     }
@@ -230,29 +289,9 @@ public class HungerProtectionUtils {
 
 			// Get position
             Vector3d pos = player.getTransform().getPosition();
-            
-            // Get spawn's world name from storageManager
-            String spawnWorldName = worldName; // fallback
-            try {
-                Class<?> essentialsClass = Class.forName("com.nhulston.essentials.Essentials");
-                Method getInstanceMethod = essentialsClass.getMethod("getInstance");
-                Object essentials = getInstanceMethod.invoke(null);
-                
-                java.lang.reflect.Field storageField = essentialsClass.getDeclaredField("storageManager");
-                storageField.setAccessible(true);
-                Object storageManager = storageField.get(essentials);
-                
-                Method getSpawnMethod = storageManager.getClass().getMethod("getSpawn");
-                Object spawn = getSpawnMethod.invoke(storageManager);
-                
-                if (spawn != null) {
-                    Method getWorldMethod = spawn.getClass().getMethod("getWorld");
-                    spawnWorldName = (String) getWorldMethod.invoke(spawn);
-                }
-            } catch (Exception e) {
-                // Use fallback worldName
-            }
-            
+
+            String spawnWorldName = getSpawnWorldName(worldName);
+
             boolean result = (boolean) isInProtectedAreaMethod.invoke(spawnProtectionManager, spawnWorldName, pos);
             return result;
 

@@ -42,7 +42,6 @@ public class EasyHungerValuesCommand extends AbstractPlayerCommand {
         }
 
         // Open the configuration UI
-        EasyHungerValuesPage page = new EasyHungerValuesPage(playerRef);
-        player.getPageManager().openCustomPage(ref, store, page);
+        AperturaDiferida.abrir(playerRef, () -> new EasyHungerValuesPage(playerRef));
     }
 }
