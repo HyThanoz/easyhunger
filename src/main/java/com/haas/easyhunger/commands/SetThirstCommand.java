@@ -12,6 +12,7 @@ import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.haas.easyhunger.components.ThirstComponent;
 import com.haas.easyhunger.ui.EasyWaterHud;
+import com.haas.easyhunger.utils.Entrada;
 import com.haas.easyhunger.utils.Msg;
 import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
 
@@ -38,7 +39,8 @@ public class SetThirstCommand extends AbstractPlayerCommand {
             return;
         }
 
-        if (newThirstLevel < 0 || newThirstLevel > 100) {
+        // Also rejects NaN and Infinity, which the old "< 0 || > 100" check let through.
+        if (!Entrada.finitoEntre(newThirstLevel, 0, 100)) {
             context.sendMessage(Msg.error(Msg.quien(context), "nivel.sed_rango"));
             return;
         }

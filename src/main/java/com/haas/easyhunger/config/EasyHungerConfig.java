@@ -52,6 +52,11 @@ public class EasyHungerConfig {
     private static final KeyedCodec<Boolean> IDLE_PAUSE_ENABLED = new KeyedCodec<>("IdlePauseEnabled", Codec.BOOLEAN);
     private static final KeyedCodec<Float> IDLE_PAUSE_SECONDS = new KeyedCodec<>("IdlePauseSeconds", Codec.FLOAT);
 
+    // Low hunger/thirst warnings (see AvisoNivelBajo)
+    private static final KeyedCodec<Boolean> LOW_WARNINGS_ENABLED = new KeyedCodec<>("LowWarningsEnabled", Codec.BOOLEAN);
+    private static final KeyedCodec<Float> CRITICAL_WARNING_THRESHOLD = new KeyedCodec<>("CriticalWarningThreshold", Codec.FLOAT);
+    private static final KeyedCodec<String> WARNING_SOUND = new KeyedCodec<>("WarningSound", Codec.STRING);
+
     // Mundos excluidos (lista negra — ver WorldGate)
     private static final KeyedCodec<String[]> DISABLED_WORLDS = new KeyedCodec<>("DisabledWorlds", Codec.STRING_ARRAY);
 
@@ -100,6 +105,11 @@ public class EasyHungerConfig {
 
             // === MUNDOS EXCLUIDOS ===
             .append(DISABLED_WORLDS, EasyHungerConfig::setDisabledWorlds, EasyHungerConfig::getDisabledWorlds).add()
+
+            // === AVISOS DE NIVEL BAJO ===
+            .append(LOW_WARNINGS_ENABLED, (c, v) -> c.lowWarningsEnabled = v, EasyHungerConfig::isLowWarningsEnabled).add()
+            .append(CRITICAL_WARNING_THRESHOLD, (c, v) -> c.criticalWarningThreshold = v, EasyHungerConfig::getCriticalWarningThreshold).add()
+            .append(WARNING_SOUND, (c, v) -> c.warningSound = (v == null ? "" : v), EasyHungerConfig::getWarningSound).add()
             .build();
 
     // === HARD-balanced defaults (v1.2.6) ===
@@ -153,6 +163,12 @@ public class EasyHungerConfig {
     // Idle Pause settings
     private boolean idlePauseEnabled = true;
     private float idlePauseSeconds = 60.0f;
+
+    // Low hunger/thirst warnings: a notification when the level drops below the "Hungry"/"Thirsty"
+    // threshold, and a stronger one at CriticalWarningThreshold. Empty WarningSound = no sound.
+    private boolean lowWarningsEnabled = true;
+    private float criticalWarningThreshold = 5.0f;
+    private String warningSound = "SFX_Generic_Crafting_Failed";
 
     /**
      * LISTA NEGRA de mundos: el mod esta activo en TODOS salvo en los que aparezcan aqui.
@@ -285,6 +301,11 @@ public class EasyHungerConfig {
     // Idle Pause getters
     public boolean isIdlePauseEnabled() { return idlePauseEnabled; }
     public float getIdlePauseSeconds() { return idlePauseSeconds; }
+
+    // Low warning getters
+    public boolean isLowWarningsEnabled() { return lowWarningsEnabled; }
+    public float getCriticalWarningThreshold() { return criticalWarningThreshold; }
+    public String getWarningSound() { return warningSound; }
 
     public String[] getDisabledWorlds() { return disabledWorlds; }
 

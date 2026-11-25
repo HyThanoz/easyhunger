@@ -2,9 +2,12 @@ package com.haas.easyhunger.events;
 
 import com.hypixel.hytale.server.core.event.events.player.PlayerDisconnectEvent;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
+import com.haas.easyhunger.commands.EasyHungerAvisosCommand;
+import com.haas.easyhunger.commands.EasyHungerHideCommand;
 import com.haas.easyhunger.ui.EasyHungerHud;
 import com.haas.easyhunger.ui.EasyWaterHud;
 import com.haas.easyhunger.utils.HungerProtectionUtils;
+import com.haas.easyhunger.utils.Lang;
 
 import java.util.UUID;
 
@@ -34,6 +37,9 @@ public class EasyHungerPlayerDisconnect {
         if (uuid != null) {
             HungerProtectionUtils.invalidateCache(uuid);
             EasyHungerPlayerReady.forgetPendingSend(uuid);
+            EasyHungerHideCommand.ENFRIAMIENTO_BARRAS.olvidar(uuid);
+            EasyHungerAvisosCommand.ENFRIAMIENTO.olvidar(uuid);
+            Lang.forget(uuid);
         }
 
         EasyHungerHud.removePlayer(playerRef);

@@ -22,6 +22,7 @@ import com.haas.easyhunger.EasyHunger;
 import com.haas.easyhunger.ui.EasyHungerHud;
 import com.haas.easyhunger.components.HungerComponent;
 import com.haas.easyhunger.utils.HungerProtectionUtils;
+import com.haas.easyhunger.utils.AvisoNivelBajo;
 import com.haas.easyhunger.utils.BiomeUtils;
 import com.haas.easyhunger.utils.WorldGate;
 import com.haas.easyhunger.config.BiomeModifiersConfig;
@@ -169,7 +170,11 @@ public class StarveSystem extends EntityTickingSystem<EntityStore> {
         }
 
         if (playerRef == null) return;
-        
+
+        // Low-level warning: only fires when the stage gets worse (cheap check every tick).
+        hunger.setAvisoEtapa(AvisoNivelBajo.revisar(playerRef, AvisoNivelBajo.Tipo.HAMBRE, hungerLevel,
+                EasyHunger.get().getConfig().getHungryThreshold(), hunger.getAvisoEtapa()));
+
         // Optimization: Only update HUD if value changed
         if (Math.abs(hungerLevel - hunger.getLastSentHunger()) < 0.01f) return;
         hunger.setLastSentHunger(hungerLevel);

@@ -37,6 +37,9 @@ public class EasyHungerShowCommand extends AbstractPlayerCommand {
         // La preferencia se guarda SIEMPRE, aunque no haya HUD que mostrar: asi al reconectar
         // ya sale visible.
         UUID uuid = playerRef.getUuid();
+        if (!EasyHungerHideCommand.pasaEnfriamiento(context, uuid)) {
+            return;
+        }
         if (uuid != null) {
             EasyHunger.get().getPlayerPrefsConfig().setHudVisible(uuid, true);
             EasyHunger.get().savePlayerPrefsConfig();

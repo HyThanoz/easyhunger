@@ -22,7 +22,7 @@ public final class ChatStyle {
     public static final String BODY = "#AAAAAA";
     public static final String EMPHASIS = "#FF5555";
     public static final String VALUE = "#FFFF55";
-    public static final String PLAYER = "#FFFF55";
+    public static final String PLAYER = "#55FF55";
     public static final String LINK = "#FFFF55";
     public static final String MUTED = "#7F7F7F";
     public static final String HEADER = "#FFAA00";

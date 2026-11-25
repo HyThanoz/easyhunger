@@ -12,6 +12,8 @@ import java.util.UUID;
 public class PlayerPrefsConfig {
     private static final KeyedCodec<Map<String, Boolean>> HUD_VISIBLE =
             new KeyedCodec<>("HudVisible", new MapCodec<>(Codec.BOOLEAN, HashMap::new));
+    private static final KeyedCodec<Map<String, Boolean>> WARNINGS_OFF =
+            new KeyedCodec<>("WarningsOff", new MapCodec<>(Codec.BOOLEAN, HashMap::new));
 
     public static final BuilderCodec<PlayerPrefsConfig> CODEC = BuilderCodec
             .builder(PlayerPrefsConfig.class, PlayerPrefsConfig::new)
@@ -22,9 +24,27 @@ public class PlayerPrefsConfig {
                     (c, v) -> c.hudVisible = (v != null ? new java.util.concurrent.ConcurrentHashMap<>(v) : new java.util.concurrent.ConcurrentHashMap<>()),
                     c -> c.hudVisible)
             .add()
+            .append(WARNINGS_OFF,
+                    (c, v) -> c.warningsOff = (v != null ? new java.util.concurrent.ConcurrentHashMap<>(v) : new java.util.concurrent.ConcurrentHashMap<>()),
+                    c -> c.warningsOff)
+            .add()
             .build();
 
     private Map<String, Boolean> hudVisible = new java.util.concurrent.ConcurrentHashMap<>();
+    // Only players who turned the warnings OFF are stored (on is the default).
+    private Map<String, Boolean> warningsOff = new java.util.concurrent.ConcurrentHashMap<>();
+
+    public boolean isWarningsOn(UUID uuid) {
+        return !warningsOff.containsKey(uuid.toString());
+    }
+
+    public void setWarningsOn(UUID uuid, boolean on) {
+        if (on) {
+            warningsOff.remove(uuid.toString());
+        } else {
+            warningsOff.put(uuid.toString(), true);
+        }
+    }
 
     public boolean isHudVisible(UUID uuid) {
         return hudVisible.getOrDefault(uuid.toString(), true);

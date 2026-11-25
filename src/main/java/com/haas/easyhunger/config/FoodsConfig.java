@@ -420,7 +420,9 @@ public class FoodsConfig {
         return value != null ? value : 0.0f;
     }
     
-    public void setFoodValue(String foodId, float value) {
+    /** @return false (and nothing is stored) if the value is NaN, infinite or negative. */
+    public boolean setFoodValue(String foodId, float value) {
+        if (!Float.isFinite(value) || value < 0.0f) return false;
         try {
             foodValues.put(foodId, value);
         } catch (UnsupportedOperationException e) {
@@ -428,6 +430,7 @@ public class FoodsConfig {
             foodValues = new LinkedHashMap<>(foodValues);
             foodValues.put(foodId, value);
         }
+        return true;
     }
     
     /**

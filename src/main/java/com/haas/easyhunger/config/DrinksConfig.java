@@ -173,7 +173,9 @@ public class DrinksConfig {
         return 0.0f;
     }
     
-    public void setDrinkValue(String drinkId, float value) {
+    /** @return false (and nothing is stored) if the value is NaN, infinite or negative. */
+    public boolean setDrinkValue(String drinkId, float value) {
+        if (!Float.isFinite(value) || value < 0.0f) return false;
         try {
             drinkValues.put(drinkId, value);
         } catch (UnsupportedOperationException e) {
@@ -181,6 +183,7 @@ public class DrinksConfig {
             drinkValues = new LinkedHashMap<>(drinkValues);
             drinkValues.put(drinkId, value);
         }
+        return true;
     }
     
     public boolean mergeDefaults() {

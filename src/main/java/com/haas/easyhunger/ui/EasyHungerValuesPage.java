@@ -11,6 +11,7 @@ import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.entity.entities.player.pages.InteractiveCustomUIPage;
 import com.hypixel.hytale.server.core.modules.i18n.I18nModule;
+import com.hypixel.hytale.server.core.permissions.PermissionsModule;
 import com.hypixel.hytale.server.core.ui.builder.EventData;
 import com.hypixel.hytale.server.core.ui.builder.UICommandBuilder;
 import com.hypixel.hytale.server.core.ui.builder.UIEventBuilder;
@@ -21,7 +22,9 @@ import com.hypixel.hytale.server.core.inventory.InventoryComponent;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.inventory.container.ItemContainer;
 import com.haas.easyhunger.EasyHunger;
+import com.haas.easyhunger.commands.EasyHungerValuesCommand;
 import com.haas.easyhunger.config.EasyHungerConfig;
+import com.haas.easyhunger.utils.Entrada;
 import com.haas.easyhunger.utils.Lang;
 import com.haas.easyhunger.utils.Msg;
 
@@ -38,6 +41,11 @@ import java.util.stream.Collectors;
  * Features tabs, search, category filters, and display names.
  */
 public class EasyHungerValuesPage extends InteractiveCustomUIPage<EasyHungerValuesPage.ConfigEventData> {
+
+    /** Highest food/drink value the panel accepts. */
+    private static final double VALOR_MAX = 1000.0;
+    /** Inventory slots shown in the panel: 36 storage + 9 hotbar. */
+    private static final int CASILLAS = 45;
 
     private String activeTab = "foods";
     private String searchQuery = "";
@@ -296,6 +304,14 @@ public class EasyHungerValuesPage extends InteractiveCustomUIPage<EasyHungerValu
         Player player = store.getComponent(ref, Player.getComponentType());
         if (player == null) return;
 
+        // The page can stay open after the permission is removed: check it on every event,
+        // not only when /eh config opens the page.
+        if (!PermissionsModule.get().hasPermission(playerRef.getUuid(), EasyHungerValuesCommand.requiredPermission)) {
+            playerRef.sendMessage(Msg.error(playerRef.getUuid(), "panel.sin_permiso"));
+            close();
+            return;
+        }
+
         if (data.action.startsWith("tab:")) {
             activeTab = data.action.substring(4);
             searchQuery = "";
@@ -311,7 +327,12 @@ public class EasyHungerValuesPage extends InteractiveCustomUIPage<EasyHungerValu
             handleAdd(data);
             rebuild(ref, store);
          } else if (data.action.startsWith("invSlot:")) {
-            int slot = Integer.parseInt(data.action.substring(8));
+            // The slot comes from the client: anything outside 0..44 (or not a number) is rejected.
+            int slot = Entrada.indice(data.action.substring(8), CASILLAS);
+            if (slot < 0) {
+                rebuild(ref, store);
+                return;
+            }
             ItemStack stack;
             if (slot < 36) {
                 InventoryComponent.Storage storageComp = store.getComponent(ref, InventoryComponent.Storage.getComponentType());
@@ -535,20 +556,26 @@ public class EasyHungerValuesPage extends InteractiveCustomUIPage<EasyHungerValu
         float value = 5.0f;
 
         if (data.newValue != null && !data.newValue.trim().isEmpty()) {
-            try {
-                value = Float.parseFloat(data.newValue.trim());
-            } catch (NumberFormatException e) {
-                playerRef.sendMessage(Msg.error(playerRef.getUuid(), "panel.valor_no_numero"));
+            Double v = Entrada.decimal(data.newValue, 0, VALOR_MAX);
+            if (v == null) {
+                playerRef.sendMessage(Msg.error(playerRef.getUuid(), "panel.valor_rango",
+                        "max", formatValue((float) VALOR_MAX)));
                 return;
             }
+            value = v.floatValue();
         }
 
+        boolean ok;
         if (activeTab.equals("foods")) {
-            EasyHunger.get().getFoodsConfig().setFoodValue(itemId, value);
-            EasyHunger.get().saveFoodsConfig();
+            ok = EasyHunger.get().getFoodsConfig().setFoodValue(itemId, value);
+            if (ok) EasyHunger.get().saveFoodsConfig();
         } else {
-            EasyHunger.get().getDrinksConfig().setDrinkValue(itemId, value);
-            EasyHunger.get().saveDrinksConfig();
+            ok = EasyHunger.get().getDrinksConfig().setDrinkValue(itemId, value);
+            if (ok) EasyHunger.get().saveDrinksConfig();
+        }
+        if (!ok) {
+            playerRef.sendMessage(Msg.error(playerRef.getUuid(), "panel.valor_no_numero"));
+            return;
         }
         playerRef.sendMessage(Msg.info(playerRef.getUuid(), "panel.agregado",
                 "item", itemId, "valor", formatValue(value)));
@@ -562,22 +589,30 @@ public class EasyHungerValuesPage extends InteractiveCustomUIPage<EasyHungerValu
             if (idx < 0 || idx >= itemIds.size()) return;
             
             String itemId = itemIds.get(idx);
-            float newValue;
-            
-            try {
-                newValue = Float.parseFloat(data.value.trim());
-                newValue = Math.max(0, newValue);
-            } catch (NumberFormatException e) {
-                playerRef.sendMessage(Msg.error(playerRef.getUuid(), "panel.valor_item_invalido", "item", itemId));
+
+            // Half-typed values ("", "2.", "2,") are ignored silently: the field is still being edited.
+            String texto = data.value.trim();
+            if (texto.isEmpty() || texto.endsWith(".") || texto.endsWith(",")) return;
+
+            Double v = Entrada.decimal(texto, 0, VALOR_MAX);
+            if (v == null) {
+                playerRef.sendMessage(Msg.error(playerRef.getUuid(), "panel.valor_item_rango",
+                        "item", itemId, "max", formatValue((float) VALOR_MAX)));
                 return;
             }
-            
+            float newValue = v.floatValue();
+
+            boolean ok;
             if (activeTab.equals("foods")) {
-                EasyHunger.get().getFoodsConfig().setFoodValue(itemId, newValue);
-                EasyHunger.get().saveFoodsConfig();
+                ok = EasyHunger.get().getFoodsConfig().setFoodValue(itemId, newValue);
+                if (ok) EasyHunger.get().saveFoodsConfig();
             } else {
-                EasyHunger.get().getDrinksConfig().setDrinkValue(itemId, newValue);
-                EasyHunger.get().saveDrinksConfig();
+                ok = EasyHunger.get().getDrinksConfig().setDrinkValue(itemId, newValue);
+                if (ok) EasyHunger.get().saveDrinksConfig();
+            }
+            if (!ok) {
+                playerRef.sendMessage(Msg.error(playerRef.getUuid(), "panel.valor_item_invalido", "item", itemId));
+                return;
             }
             playerRef.sendMessage(Msg.info(playerRef.getUuid(), "panel.actualizado",
                     "item", itemId, "valor", formatValue(newValue)));

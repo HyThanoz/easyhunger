@@ -26,6 +26,9 @@ public class HungerComponent implements Component<EntityStore> {
     // Pausa por inactividad (estado compartido con la sed por la clase IdleTracker)
     private final IdleTracker idle = new IdleTracker();
 
+    // Low-level warning stage already shown (0 none, 1 low, 2 critical). Runtime only, not saved.
+    private int avisoEtapa = 0;
+
     public HungerComponent() {
         this.hungerLevel = EasyHunger.get().getConfig().getMaxHunger(); // Max hunger level from config
     }
@@ -70,6 +73,9 @@ public class HungerComponent implements Component<EntityStore> {
     public float getLastSentHunger() { return lastSentHunger; }
     public void setLastSentHunger(float v) { this.lastSentHunger = v; }
 
+    public int getAvisoEtapa() { return avisoEtapa; }
+    public void setAvisoEtapa(int v) { this.avisoEtapa = v; }
+
     // WellFed system elapsed time tracking
     private float wellFedElapsedTime = 0.0f;
     public float getWellFedElapsedTime() { return wellFedElapsedTime; }
@@ -82,10 +88,12 @@ public class HungerComponent implements Component<EntityStore> {
         return this.hungerLevel;
     }
     public void setHungerLevel (float hungerLevel) {
+        if (!Float.isFinite(hungerLevel)) return; // NaN would stick forever (every comparison is false)
         float max = EasyHunger.get().getConfig().getMaxHunger();
         this.hungerLevel = Math.max(0.0f, Math.min(hungerLevel, max));
     }
     public void feed (float amount) {
+        if (!Float.isFinite(amount) || amount <= 0.0f) return;
         float max = EasyHunger.get().getConfig().getMaxHunger();
         this.hungerLevel = Math.min(this.hungerLevel + amount, max);
     }

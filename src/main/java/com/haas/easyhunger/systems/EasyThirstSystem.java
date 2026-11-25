@@ -20,6 +20,7 @@ import com.haas.easyhunger.components.ThirstComponent;
 import com.hypixel.hytale.server.core.entity.movement.MovementStatesComponent;
 import com.hypixel.hytale.protocol.MovementStates;
 import com.haas.easyhunger.utils.HungerProtectionUtils;
+import com.haas.easyhunger.utils.AvisoNivelBajo;
 import com.haas.easyhunger.utils.BiomeUtils;
 import com.haas.easyhunger.utils.WorldGate;
 import com.hypixel.hytale.server.core.entity.EntityUtils;
@@ -157,8 +158,11 @@ public class EasyThirstSystem extends EntityTickingSystem<EntityStore> {
         }
 
         if (playerRef == null) return;
-        
-        
+
+        // Low-level warning: only fires when the stage gets worse (cheap check every tick).
+        thirst.setAvisoEtapa(AvisoNivelBajo.revisar(playerRef, AvisoNivelBajo.Tipo.SED, thirstLevel,
+                thirstyThreshold, thirst.getAvisoEtapa()));
+
         // Optimization: Only update HUD if value changed
         if (Math.abs(thirstLevel - thirst.getLastSentThirst()) < 0.01f) return;
         thirst.setLastSentThirst(thirstLevel);

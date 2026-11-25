@@ -24,7 +24,11 @@ All changes are by MyTale (HyThanoz). This repository has one commit per publish
 | 1.5.23 | 2026-10-19 | Bar textures flipped vertically (tip on top) |
 | 1.5.24 | 2026-10-20 | Plates and soups that use the drink chain now restore hunger when they are listed as food (`ConsumableKind`) |
 | 1.5.25 | 2026-10-20 | `/eh addall` sends juices and other drinks to Drinks by name |
-| 1.5.26 | 2026-10-20 | Shared `Lang` piece updated (language chosen in MytaleComunidad). Version running in production |
+| 1.5.26 | 2026-10-20 | Shared `Lang` piece updated (language chosen in MytaleComunidad) |
+| 1.5.27–1.5.29 | by 2026-11-18 | Low hunger/thirst warnings (`AvisoNivelBajo`: notification and sound when the level drops below the Hungry/Thirsty threshold and again at `CriticalWarningThreshold`; config `LowWarningsEnabled`, `CriticalWarningThreshold`, `WarningSound`), new `/eh avisos` to turn them off per player (`WarningsOff` in the player prefs). Input validation (`utils/Entrada`): NaN/Infinity rejected in `/hset`, `/tset`, the components and the values panel; panel values limited to 0–1000; inventory slot index checked; the panel re-checks `easyhunger.config` on every action. 3 s cooldown on `/eh hide`, `/eh show` and `/eh avisos`. Per-player state forgotten on disconnect. Player name colour in chat set to green. Version running in production |
+
+The 1.5.27–1.5.29 source was published after those versions were already running; it was rebuilt from
+1.5.26 plus the changes in the production jar, and its compiled classes match that jar's bytecode.
 
 Shared MyTale pieces copied into this mod (`utils/ChatStyle`, `utils/Lang`, `commands/AperturaDiferida`)
 are distributed here under the AGPL-3.0 as part of this work.

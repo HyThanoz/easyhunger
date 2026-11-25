@@ -27,6 +27,7 @@ public class EasyHungerCommand extends AbstractPlayerCommand {
 
         this.addSubCommand(new EasyHungerHideCommand());
         this.addSubCommand(new EasyHungerShowCommand());
+        this.addSubCommand(new EasyHungerAvisosCommand());
         this.addSubCommand(new EhAddAllCommand());
     }
 
@@ -51,6 +52,7 @@ public class EasyHungerCommand extends AbstractPlayerCommand {
         playerRef.sendMessage(ChatStyle.header(Lang.t(uuid, "ayuda.titulo")));
         playerRef.sendMessage(Msg.suelta(uuid, "ayuda.hide"));
         playerRef.sendMessage(Msg.suelta(uuid, "ayuda.show"));
+        playerRef.sendMessage(Msg.suelta(uuid, "ayuda.avisos"));
         playerRef.sendMessage(Msg.suelta(uuid, "ayuda.config"));
     }
 }

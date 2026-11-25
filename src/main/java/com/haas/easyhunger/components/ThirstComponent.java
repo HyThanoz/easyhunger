@@ -23,6 +23,9 @@ public class ThirstComponent implements Component<EntityStore> {
     // Pausa por inactividad (estado compartido con el hambre por la clase IdleTracker)
     private final IdleTracker idle = new IdleTracker();
 
+    // Low-level warning stage already shown (0 none, 1 low, 2 critical). Runtime only, not saved.
+    private int avisoEtapa = 0;
+
     public ThirstComponent() {
         this.thirstLevel = EasyHunger.get().getConfig().getMaxThirst(); // Init with Max
     }
@@ -51,6 +54,9 @@ public class ThirstComponent implements Component<EntityStore> {
 
     public float getLastSentThirst() { return lastSentThirst; }
     public void setLastSentThirst(float v) { this.lastSentThirst = v; }
+
+    public int getAvisoEtapa() { return avisoEtapa; }
+    public void setAvisoEtapa(int v) { this.avisoEtapa = v; }
     
     @Nullable
     @Override
@@ -63,11 +69,13 @@ public class ThirstComponent implements Component<EntityStore> {
     }
 
     public void setThirstLevel (float level) {
+        if (!Float.isFinite(level)) return; // NaN would stick forever (every comparison is false)
         float max = EasyHunger.get().getConfig().getMaxThirst();
         this.thirstLevel = Math.max(0.0f, Math.min(level, max));
     }
 
     public void drink (float amount) {
+        if (!Float.isFinite(amount) || amount <= 0.0f) return;
         float max = EasyHunger.get().getConfig().getMaxThirst();
         this.thirstLevel = Math.min(this.thirstLevel + amount, max);
     }
