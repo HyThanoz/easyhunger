@@ -20,15 +20,25 @@ public class DrinksConfig {
     
     // MapCodec entrega un mapa inmutable al cargar: se copia (en orden) para que put no lance
     // UnsupportedOperationException. Misma regla que PlayerPrefsConfig.
+    // null (JSON "DrinkValues": null) keeps the defaults instead of leaving a null map (1.5.31).
     public static final BuilderCodec<DrinksConfig> CODEC = BuilderCodec.builder(DrinksConfig.class, DrinksConfig::new)
-            .append(DRINK_VALUES, (c, v) -> c.drinkValues = (v == null) ? null : new LinkedHashMap<>(v), DrinksConfig::getDrinkValues).add()
+            .append(DRINK_VALUES, (c, v) -> { if (v != null) c.drinkValues = publicar(new LinkedHashMap<>(v)); }, DrinksConfig::getDrinkValues).add()
             .build();
-    
-    private Map<String, Float> drinkValues;
-    
+
+    /**
+     * 1.5.31 (trap D4): copy-on-write, same as FoodsConfig. The published map is never modified;
+     * writes copy it and publish the copy through this volatile field.
+     */
+    private volatile Map<String, Float> drinkValues;
+
     public DrinksConfig() {
         drinkValues = new LinkedHashMap<>();
         initializeDefaults();
+        drinkValues = publicar(drinkValues);
+    }
+
+    private static Map<String, Float> publicar(Map<String, Float> nuevo) {
+        return java.util.Collections.unmodifiableMap(nuevo);
     }
     
     private void initializeDefaults() {
@@ -157,14 +167,15 @@ public class DrinksConfig {
     public Map<String, Float> getDrinkValues() { return drinkValues; }
     
     public Float getDrinkValue(String drinkId) {
+        Map<String, Float> mapa = drinkValues; // one snapshot for the whole lookup
         // First try exact match
-        Float value = drinkValues.get(drinkId);
+        Float value = mapa.get(drinkId);
         if (value != null && value > 0) {
             return value;
         }
-        
+
         // Then try partial match (config key is prefix of actual ID)
-        for (Map.Entry<String, Float> entry : drinkValues.entrySet()) {
+        for (Map.Entry<String, Float> entry : mapa.entrySet()) {
             if (drinkId != null && drinkId.startsWith(entry.getKey())) {
                 return entry.getValue();
             }
@@ -179,28 +190,25 @@ public class DrinksConfig {
      */
     public Float findDrinkValue(String drinkId) {
         if (drinkId == null) return null;
-        Float value = drinkValues.get(drinkId);
+        Map<String, Float> mapa = drinkValues; // one snapshot for the whole lookup
+        Float value = mapa.get(drinkId);
         if (value != null) return value;
-        for (Map.Entry<String, Float> entry : drinkValues.entrySet()) {
+        for (Map.Entry<String, Float> entry : mapa.entrySet()) {
             if (drinkId.startsWith(entry.getKey())) return entry.getValue();
         }
         return null;
     }
 
     /** @return false (and nothing is stored) if the value is NaN, infinite or negative. */
-    public boolean setDrinkValue(String drinkId, float value) {
+    public synchronized boolean setDrinkValue(String drinkId, float value) {
         if (!Float.isFinite(value) || value < 0.0f) return false;
-        try {
-            drinkValues.put(drinkId, value);
-        } catch (UnsupportedOperationException e) {
-            // Map is unmodifiable, create a mutable copy
-            drinkValues = new LinkedHashMap<>(drinkValues);
-            drinkValues.put(drinkId, value);
-        }
+        Map<String, Float> copia = new LinkedHashMap<>(drinkValues);
+        copia.put(drinkId, value);
+        drinkValues = publicar(copia);
         return true;
     }
-    
-    public boolean mergeDefaults() {
+
+    public synchronized boolean mergeDefaults() {
         DrinksConfig defaultConfig = new DrinksConfig();
         Map<String, Float> defaults = defaultConfig.getDrinkValues();
         
@@ -228,7 +236,7 @@ public class DrinksConfig {
         }
         
         if (changed) {
-            drinkValues = mutableValues;
+            drinkValues = publicar(mutableValues);
         }
         return changed;
     }

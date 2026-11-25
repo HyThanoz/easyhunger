@@ -3,7 +3,7 @@ plugins {
 }
 
 group = "es.mytale"
-version = "1.5.30"
+version = "1.5.31"
 
 repositories {
     mavenCentral()

@@ -25,8 +25,49 @@ public class BiomeUtils {
      * multiplier) for a cache that stays small and hits almost always.
      */
     private static final int MAX_CACHED_CHUNKS_PER_WORLD = 65536;
-    private static final java.util.concurrent.ConcurrentHashMap<String, java.util.concurrent.ConcurrentHashMap<Long, String>> BIOME_CACHE =
+
+    /**
+     * 1.5.31 (R7): worlds were never removed from the cache, so every dungeon instance
+     * ("instance-...-<uuid>") left up to 65 536 entries in memory until the next restart.
+     * Now: the world's entry is dropped when the world is removed or its worldgen is cleared
+     * (see {@link #forgetWorld}), and there is a hard cap on the number of cached worlds.
+     */
+    private static final int MAX_CACHED_WORLDS = 32;
+
+    /** One world's cache. The seed is kept so a world regenerated under the same name is not mixed up. */
+    private static final class WorldCache {
+        final long seed;
+        final java.util.concurrent.ConcurrentHashMap<Long, String> chunks = new java.util.concurrent.ConcurrentHashMap<>();
+        WorldCache(long seed) { this.seed = seed; }
+    }
+
+    private static final java.util.concurrent.ConcurrentHashMap<String, WorldCache> BIOME_CACHE =
             new java.util.concurrent.ConcurrentHashMap<>();
+
+    /** Drops a world's cached biomes. Called on RemoveWorldEvent and WorldGenChunksClearedEvent. */
+    public static void forgetWorld(String worldName) {
+        if (worldName != null) BIOME_CACHE.remove(worldName);
+    }
+
+    /** Drops everything (plugin shutdown). */
+    public static void forgetAll() {
+        BIOME_CACHE.clear();
+    }
+
+    private static WorldCache cacheFor(World world) {
+        String name = world.getName();
+        long seed = world.getWorldConfig().getSeed();
+        WorldCache wc = BIOME_CACHE.get(name);
+        if (wc != null && wc.seed == seed) return wc;
+
+        // New world, or same name with another seed: start a fresh cache for it.
+        if (wc == null && BIOME_CACHE.size() >= MAX_CACHED_WORLDS) {
+            BIOME_CACHE.clear(); // rare (more than 32 worlds at once): just rebuild what is used
+        }
+        WorldCache nuevo = new WorldCache(seed);
+        BIOME_CACHE.put(name, nuevo);
+        return nuevo;
+    }
 
     /**
      * Get the biome name at the player's current position.
@@ -63,8 +104,8 @@ public class BiomeUtils {
             int z = (int) position.z();
             long chunkKey = (((long) (x >> 4)) << 32) | ((z >> 4) & 0xFFFFFFFFL);
 
-            java.util.concurrent.ConcurrentHashMap<Long, String> worldCache =
-                    BIOME_CACHE.computeIfAbsent(world.getName(), k -> new java.util.concurrent.ConcurrentHashMap<>());
+            WorldCache wc = cacheFor(world);
+            java.util.concurrent.ConcurrentHashMap<Long, String> worldCache = wc.chunks;
             String cached = worldCache.get(chunkKey);
             if (cached != null) return cached;
 
@@ -72,7 +113,7 @@ public class BiomeUtils {
             if (!(worldGen instanceof ChunkGenerator)) return null;
 
             ChunkGenerator generator = (ChunkGenerator) worldGen;
-            int seed = (int) world.getWorldConfig().getSeed();
+            int seed = (int) wc.seed;
 
             ZoneBiomeResult result = generator.generateZoneBiomeResultAt(seed, x, z);
             if (result == null) return null;

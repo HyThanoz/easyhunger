@@ -141,6 +141,17 @@ public class EasyHunger extends JavaPlugin {
             com.haas.easyhunger.events.EasyHungerPlayerDisconnect::handle
         );
 
+        // 1.5.31 (R7): drop a world's cached biomes when it is removed (dungeon instances) or its
+        // worldgen is cleared. Keyed events (key = world name), so registerGlobal (trap B4).
+        this.getEventRegistry().registerGlobal(
+            com.hypixel.hytale.server.core.universe.world.events.RemoveWorldEvent.class,
+            e -> com.haas.easyhunger.utils.BiomeUtils.forgetWorld(e.getWorld().getName())
+        );
+        this.getEventRegistry().registerGlobal(
+            com.hypixel.hytale.server.core.universe.world.events.WorldGenChunksClearedEvent.class,
+            e -> com.haas.easyhunger.utils.BiomeUtils.forgetWorld(e.getWorld().getName())
+        );
+
         // Barrido de auto-recuperacion del HUD: recrea el HUD SOLO a quien deberia tenerlo y no lo
         // tiene (Modo A). Nunca reenvia uno existente — seguro por construccion (ver
         // EasyHungerPlayerReady.recoverMissingHuds). Toggle en config.
@@ -166,9 +177,14 @@ public class EasyHunger extends JavaPlugin {
 
         // Register version info command (/ehversion)
         this.getCommandRegistry().registerCommand(new com.haas.easyhunger.commands.EhVersionCommand());
+    }
 
-
-        // Try to prune recipes immediately, but also plan for a delayed pruning if needed
+    /**
+     * 1.5.31: the recipe pruning moved here from setup(). In setup() the assets are not loaded yet
+     * (LoadAssetEvent runs between setup and start), so it never removed anything.
+     */
+    @Override
+    protected void start() {
         this.pruneRecipes();
     }
 
@@ -177,40 +193,52 @@ public class EasyHunger extends JavaPlugin {
     // was removed: those group names don't exist on servers with custom permission systems,
     // which silently left players unable to use the toggles.
 
-    public void pruneRecipes() {
+    /** Items whose crafting recipes make no sense with ThirstEnabled=false. */
+    private static final java.util.Set<String> RECETAS_SOLO_CON_SED =
+            java.util.Set.of("EasyHunger_Odre_Empty", "EasyHunger_WaterBowl_Empty");
+
+    /**
+     * ThirstEnabled=false: removes the crafting recipes of the waterskin and the water bowl.
+     *
+     * 1.5.31 (native first, ADR 0010): removes the recipe ASSETS with the public
+     * {@code CraftingRecipe.getAssetStore().removeAssets(...)}, the same call CraftingPlugin uses
+     * when an item is unloaded. CraftingPlugin then updates its benches by itself
+     * (RemovedAssetsEvent). Before: reflection on the private field CraftingPlugin.registries.
+     *
+     * Called from start(), off any world thread: removeAssets takes the asset write lock.
+     * Never throws (a failure in start() would stop the whole server, trap S2).
+     * ⚠ A later asset reload brings the recipes back until the next restart.
+     */
+    private void pruneRecipes() {
         if (this.getConfig().isThirstEnabled()) {
             return;
         }
 
         try {
-            java.lang.reflect.Field registriesField = com.hypixel.hytale.builtin.crafting.CraftingPlugin.class.getDeclaredField("registries");
-            registriesField.setAccessible(true);
-            java.util.Map<String, com.hypixel.hytale.builtin.crafting.BenchRecipeRegistry> registries = 
-                (java.util.Map<String, com.hypixel.hytale.builtin.crafting.BenchRecipeRegistry>) registriesField.get(null);
-            
-            if (registries != null) {
-                for (com.hypixel.hytale.builtin.crafting.BenchRecipeRegistry registry : registries.values()) {
-                    boolean changed = false;
-                    for (com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe recipe : registry.getAllRecipes()) {
-                        String outputId = recipe.getPrimaryOutput() != null ? recipe.getPrimaryOutput().getItemId() : null;
-                        if ("EasyHunger_Odre_Empty".equals(outputId) || "EasyHunger_WaterBowl_Empty".equals(outputId)) {
-                            registry.removeRecipe(recipe.getId());
-                            changed = true;
-                        }
-                    }
-                    if (changed) {
-                        registry.recompute();
-                    }
+            java.util.List<String> ids = new java.util.ArrayList<>();
+            for (com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe recipe
+                    : com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe.getAssetMap().getAssetMap().values()) {
+                String outputId = recipe.getPrimaryOutput() != null ? recipe.getPrimaryOutput().getItemId() : null;
+                if (outputId != null && RECETAS_SOLO_CON_SED.contains(outputId)) {
+                    ids.add(recipe.getId());
                 }
             }
-        } catch (Exception e) {
-            LOGGER.at(java.util.logging.Level.SEVERE).withCause(e).log("Failed to robustly prune Waterskin recipes");
+            if (ids.isEmpty()) {
+                LOGGER.at(Level.WARNING).log("ThirstEnabled=false, but no waterskin or water bowl recipe was found to remove");
+                return;
+            }
+            java.util.Set<String> quitadas =
+                    com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe.getAssetStore().removeAssets(ids);
+            LOGGER.at(Level.INFO).log("ThirstEnabled=false: removed " + quitadas.size() + " recipe(s): " + quitadas);
+        } catch (Exception | LinkageError e) {
+            LOGGER.at(Level.SEVERE).withCause(e).log("Failed to remove the waterskin recipes");
         }
     }
 
     @Override
     protected void shutdown() {
         this.hudRetryScheduler.shutdownNow();
+        com.haas.easyhunger.utils.BiomeUtils.forgetAll();
         // 1.5.30 (trap D1): save() is async; wait (max 5 s) for the saves still running, so a change
         // made just before the shutdown is not lost. Nothing new is saved here, so hand edits to
         // the JSON files made while the server was running are not overwritten.

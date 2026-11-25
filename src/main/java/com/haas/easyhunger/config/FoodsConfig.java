@@ -20,15 +20,27 @@ public class FoodsConfig {
     
     // MapCodec entrega un mapa inmutable al cargar: se copia (en orden) para que put no lance
     // UnsupportedOperationException. Misma regla que PlayerPrefsConfig.
+    // null (JSON "FoodValues": null) keeps the defaults instead of leaving a null map (1.5.31).
     public static final BuilderCodec<FoodsConfig> CODEC = BuilderCodec.builder(FoodsConfig.class, FoodsConfig::new)
-            .append(FOOD_VALUES, (c, v) -> c.foodValues = (v == null) ? null : new LinkedHashMap<>(v), FoodsConfig::getFoodValues).add()
+            .append(FOOD_VALUES, (c, v) -> { if (v != null) c.foodValues = publicar(new LinkedHashMap<>(v)); }, FoodsConfig::getFoodValues).add()
             .build();
-    
-    private Map<String, Float> foodValues;
-    
+
+    /**
+     * 1.5.31 (trap D4): copy-on-write. Written from the values panel and /eh addall (one world
+     * thread), read when eating in EVERY world and encoded by save(). The published map is never
+     * modified: each write copies it, changes the copy and publishes it through this volatile
+     * field. Readers always see a complete map, without locks.
+     */
+    private volatile Map<String, Float> foodValues;
+
     public FoodsConfig() {
         foodValues = new LinkedHashMap<>();
         initializeDefaults();
+        foodValues = publicar(foodValues);
+    }
+
+    private static Map<String, Float> publicar(Map<String, Float> nuevo) {
+        return java.util.Collections.unmodifiableMap(nuevo);
     }
     
     private void initializeDefaults() {
@@ -421,15 +433,11 @@ public class FoodsConfig {
     }
     
     /** @return false (and nothing is stored) if the value is NaN, infinite or negative. */
-    public boolean setFoodValue(String foodId, float value) {
+    public synchronized boolean setFoodValue(String foodId, float value) {
         if (!Float.isFinite(value) || value < 0.0f) return false;
-        try {
-            foodValues.put(foodId, value);
-        } catch (UnsupportedOperationException e) {
-            // Map is unmodifiable, create a mutable copy
-            foodValues = new LinkedHashMap<>(foodValues);
-            foodValues.put(foodId, value);
-        }
+        Map<String, Float> copia = new LinkedHashMap<>(foodValues);
+        copia.put(foodId, value);
+        foodValues = publicar(copia);
         return true;
     }
     
@@ -438,7 +446,7 @@ public class FoodsConfig {
      * Only adds entries that don't already exist - preserves user customizations.
      * @return true if any new entries were added
      */
-    public boolean mergeDefaults() {
+    public synchronized boolean mergeDefaults() {
         FoodsConfig defaultConfig = new FoodsConfig();
         Map<String, Float> defaults = defaultConfig.getFoodValues();
         
@@ -454,7 +462,7 @@ public class FoodsConfig {
         }
         
         if (changed) {
-            foodValues = mutableValues;
+            foodValues = publicar(mutableValues);
         }
         return changed;
     }
