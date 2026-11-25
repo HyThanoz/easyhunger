@@ -23,9 +23,10 @@ public class OnDeathSystem extends DeathSystems.OnDeathSystem {
     @NullableDecl
     @Override
     public Query<EntityStore> getQuery() {
+        // ThirstComponent is NOT required: with ThirstEnabled=false players have none, and requiring
+        // it meant hunger was never refilled on respawn. Thirst is read as optional below.
         return Query.and(
             HungerComponent.getComponentType(),
-            ThirstComponent.getComponentType(), // Add Filter for Thirst
             PlayerRef.getComponentType()
         );
     }

@@ -436,8 +436,10 @@ public class EasyHungerValuesPage extends InteractiveCustomUIPage<EasyHungerValu
             cmd.set(selector + " #ItemName.TooltipTextSpans", Message.raw(itemId));
             cmd.set(selector + " #ValueInput.Value", formatValue(value));
 
+            // FocusLost, no ValueChanged (1.5.30): ValueChanged guardaba el archivo y mandaba un
+            // mensaje en CADA tecla ("150" pasaba por 1, 15 y 150). Mismo patron que la pestana Config.
             evt.addEventBinding(
-                CustomUIEventBindingType.ValueChanged,
+                CustomUIEventBindingType.FocusLost,
                 selector + " #ValueInput",
                 new EventData()
                     .append("Action", "setValue")
@@ -601,6 +603,13 @@ public class EasyHungerValuesPage extends InteractiveCustomUIPage<EasyHungerValu
                 return;
             }
             float newValue = v.floatValue();
+
+            // FocusLost llega tambien al entrar y salir del campo sin tocarlo: si el valor guardado
+            // ya es ese, no se guarda ni se avisa otra vez.
+            Float actual = activeTab.equals("foods")
+                    ? EasyHunger.get().getFoodsConfig().getFoodValues().get(itemId)
+                    : EasyHunger.get().getDrinksConfig().getDrinkValues().get(itemId);
+            if (actual != null && actual == newValue) return;
 
             boolean ok;
             if (activeTab.equals("foods")) {

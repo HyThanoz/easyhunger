@@ -98,6 +98,8 @@ public class HungerComponent implements Component<EntityStore> {
         this.hungerLevel = Math.min(this.hungerLevel + amount, max);
     }
     public void starve(float amount) {
+        // 1.5.30: a negative amount (e.g. a negative biome multiplier) raised hunger past the max.
+        if (!Float.isFinite(amount) || amount <= 0.0f) return;
         this.hungerLevel = Math.max(this.hungerLevel - amount, 0.0f);
     }
 

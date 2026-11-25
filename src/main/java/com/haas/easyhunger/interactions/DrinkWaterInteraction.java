@@ -124,15 +124,17 @@ public class DrinkWaterInteraction extends SimpleInstantInteraction {
                         }
                         
                         // Try full ID first (e.g. Deco_Tankard_State_Filled_Water)
-                        Float configValue = EasyHunger.get().getDrinksConfig().getDrinkValue(itemId);
-                        
+                        Float configValue = EasyHunger.get().getDrinksConfig().findDrinkValue(itemId);
+
                         // If not found, try without state suffix (e.g. Deco_Tankard)
-                        if (configValue <= 0 && itemId.contains(":")) {
+                        if (configValue == null && itemId.contains(":")) {
                             String baseId = itemId.substring(0, itemId.indexOf(":"));
-                            configValue = EasyHunger.get().getDrinksConfig().getDrinkValue(baseId);
+                            configValue = EasyHunger.get().getDrinksConfig().findDrinkValue(baseId);
                         }
-                        
-                        if (configValue > 0) {
+
+                        // Configured (also 0 = restores nothing) wins over the default. Before 1.5.30
+                        // a drink set to 0 fell back to the default 15.
+                        if (configValue != null) {
                             restoreAmount = configValue;
                         }
                     }

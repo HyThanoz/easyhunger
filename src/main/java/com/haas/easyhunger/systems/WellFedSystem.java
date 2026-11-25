@@ -67,9 +67,10 @@ public class WellFedSystem extends EntityTickingSystem<EntityStore> {
     @Nonnull
     @Override
     public Query<EntityStore> getQuery() {
+        // ThirstComponent is optional (absent with ThirstEnabled=false): requiring it meant nobody
+        // got Nourished when thirst was off. getComponent returns null when it is missing.
         return Query.and(
             HungerComponent.getComponentType(),
-            ThirstComponent.getComponentType(),
             Player.getComponentType(),
             PlayerRef.getComponentType(),
             Query.not(DeathComponent.getComponentType()),
@@ -109,7 +110,7 @@ public class WellFedSystem extends EntityTickingSystem<EntityStore> {
 
         HungerComponent hunger = archetypeChunk.getComponent(index, HungerComponent.getComponentType());
         ThirstComponent thirst = archetypeChunk.getComponent(index, ThirstComponent.getComponentType());
-        if (hunger == null || thirst == null) return;
+        if (hunger == null) return;
         
         // Track elapsed time for tick rate
         hunger.addWellFedElapsedTime(dt);
@@ -119,8 +120,7 @@ public class WellFedSystem extends EntityTickingSystem<EntityStore> {
         // Compare against absolute threshold (like HungryThreshold)
         // Example: if threshold=45 and maxHunger=50, buff activates at 45+ hunger
         float hungerLevel = hunger.getHungerLevel();
-        float thirstLevel = thirst.getThirstLevel();
-        
+
         // Se lee la config en cada pasada, no al construir: si la opcion esta apagada, ambos
         // quedan en false y abajo se dispara la rama que RETIRA los efectos.
         EasyHungerConfig conf = EasyHunger.get().getConfig();
@@ -128,7 +128,10 @@ public class WellFedSystem extends EntityTickingSystem<EntityStore> {
         float wellFedThreshold = conf.getWellFedThreshold();
 
         boolean shouldBeNourished = wellFedEnabled && hungerLevel >= wellFedThreshold;
-        boolean shouldBeHydrated = wellFedEnabled && thirstLevel >= wellFedThreshold;
+        // Sed apagada o sin componente: Hydrated se RETIRA. Antes, un ThirstComponent guardado de
+        // cuando la sed estaba activa dejaba el buff puesto para siempre (la sed ya no baja).
+        boolean shouldBeHydrated = wellFedEnabled && conf.isThirstEnabled() && thirst != null
+                && thirst.getThirstLevel() >= wellFedThreshold;
         
         Ref<EntityStore> ref = archetypeChunk.getReferenceTo(index);
         EffectControllerComponent effectController = commandBuffer.getComponent(ref, EffectControllerComponent.getComponentType());

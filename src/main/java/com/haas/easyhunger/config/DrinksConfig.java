@@ -172,7 +172,21 @@ public class DrinksConfig {
         
         return 0.0f;
     }
-    
+
+    /**
+     * Like {@link #getDrinkValue} but tells "not configured" (null) apart from "configured to 0".
+     * Used where 0 must mean "this drink restores nothing" instead of "use the default" (1.5.30).
+     */
+    public Float findDrinkValue(String drinkId) {
+        if (drinkId == null) return null;
+        Float value = drinkValues.get(drinkId);
+        if (value != null) return value;
+        for (Map.Entry<String, Float> entry : drinkValues.entrySet()) {
+            if (drinkId.startsWith(entry.getKey())) return entry.getValue();
+        }
+        return null;
+    }
+
     /** @return false (and nothing is stored) if the value is NaN, infinite or negative. */
     public boolean setDrinkValue(String drinkId, float value) {
         if (!Float.isFinite(value) || value < 0.0f) return false;

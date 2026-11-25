@@ -68,15 +68,16 @@ public class StartDrinkingInteraction extends SimpleInstantInteraction {
                 if (itemId != null && itemId.contains(":")) {
                     itemId = itemId.substring(0, itemId.indexOf(":"));
                 }
-                Float configValue = EasyHunger.get().getDrinksConfig().getDrinkValue(itemId);
-                if (configValue > 0) {
+                // Same rule as DrinkWaterInteraction: a configured value (also 0) wins.
+                Float configValue = EasyHunger.get().getDrinksConfig().findDrinkValue(itemId);
+                if (configValue != null) {
                     restoreAmount = configValue;
                 }
             } else if (context.getOriginalItemType() != null) {
                 // Fallback to original item type
                 String itemId = context.getOriginalItemType().getId();
-                Float configValue = EasyHunger.get().getDrinksConfig().getDrinkValue(itemId);
-                if (configValue > 0) {
+                Float configValue = EasyHunger.get().getDrinksConfig().findDrinkValue(itemId);
+                if (configValue != null) {
                     restoreAmount = configValue;
                 }
             }

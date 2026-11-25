@@ -211,7 +211,30 @@ public class EasyHunger extends JavaPlugin {
     @Override
     protected void shutdown() {
         this.hudRetryScheduler.shutdownNow();
+        // 1.5.30 (trap D1): save() is async; wait (max 5 s) for the saves still running, so a change
+        // made just before the shutdown is not lost. Nothing new is saved here, so hand edits to
+        // the JSON files made while the server was running are not overwritten.
+        java.util.concurrent.CompletableFuture<?>[] enCurso =
+                this.pendingSaves.toArray(new java.util.concurrent.CompletableFuture<?>[0]);
+        if (enCurso.length > 0) {
+            try {
+                java.util.concurrent.CompletableFuture.allOf(enCurso).get(5, java.util.concurrent.TimeUnit.SECONDS);
+            } catch (Exception e) {
+                LOGGER.at(java.util.logging.Level.WARNING).withCause(e)
+                        .log("Some EasyHunger config saves did not finish before shutdown");
+            }
+        }
         super.shutdown();
+    }
+
+    /** Saves started and not finished yet; shutdown() waits for them. */
+    private final java.util.Set<java.util.concurrent.CompletableFuture<Void>> pendingSaves =
+            java.util.concurrent.ConcurrentHashMap.newKeySet();
+
+    private void track(java.util.concurrent.CompletableFuture<Void> save) {
+        if (save == null) return;
+        this.pendingSaves.add(save);
+        save.whenComplete((ok, error) -> this.pendingSaves.remove(save));
     }
 
     /**
@@ -247,15 +270,15 @@ public class EasyHunger extends JavaPlugin {
     }
 
     public void saveConfig() {
-        this.config.save();
+        track(this.config.save());
     }
 
     public void saveFoodsConfig() {
-        this.foodsConfig.save();
+        track(this.foodsConfig.save());
     }
 
     public void saveDrinksConfig() {
-        this.drinksConfig.save();
+        track(this.drinksConfig.save());
     }
 
     public ComponentType<EntityStore, HungerComponent> getHungerComponentType() {
@@ -287,7 +310,7 @@ public class EasyHunger extends JavaPlugin {
     }
 
     public void savePlayerPrefsConfig() {
-        this.playerPrefsConfig.save();
+        track(this.playerPrefsConfig.save());
     }
 
     public static EasyHunger get() {

@@ -3,7 +3,7 @@ plugins {
 }
 
 group = "es.mytale"
-version = "1.5.29"
+version = "1.5.30"
 
 repositories {
     mavenCentral()
@@ -69,7 +69,7 @@ val generateManifest by tasks.registering {
               "Group": "${project.group}",
               "Name": "${rootProject.name}",
               "Version": "${project.version}",
-              "ServerVersion": "*",
+              "ServerVersion": ">=0.7.7 <0.8.0",
               "Main": "com.haas.easyhunger.EasyHunger",
               "Authors": [ { "Name": "haasapenas" } ],
               "IncludesAssetPack": true

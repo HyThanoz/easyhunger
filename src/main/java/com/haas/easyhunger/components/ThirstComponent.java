@@ -81,6 +81,8 @@ public class ThirstComponent implements Component<EntityStore> {
     }
 
     public void dehydrate(float amount) {
+        // 1.5.30: a negative amount (e.g. a negative biome multiplier) raised thirst past the max.
+        if (!Float.isFinite(amount) || amount <= 0.0f) return;
         this.thirstLevel = Math.max(this.thirstLevel - amount, 0.0f);
     }
 

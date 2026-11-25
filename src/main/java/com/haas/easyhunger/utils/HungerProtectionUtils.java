@@ -1,6 +1,8 @@
 package com.haas.easyhunger.utils;
 
 import com.hypixel.hytale.server.core.universe.PlayerRef;
+import com.hypixel.hytale.server.core.universe.Universe;
+import com.hypixel.hytale.server.core.universe.world.World;
 import org.joml.Vector3d;
 import java.lang.reflect.Method;
 import java.util.UUID;
@@ -40,12 +42,6 @@ public class HungerProtectionUtils {
         if (uuid != null) safeCache.remove(uuid.toString());
     }
 
-    // PlayerRef has no getWorld() in current server builds — probe for it ONCE instead of
-    // throwing+swallowing NoSuchMethodException on every call (isSafe runs per block break).
-    private static Method playerGetWorldMethod;
-    private static Method worldGetNameMethod;
-    private static boolean worldMethodProbed = false;
-
     public static boolean isSafe(PlayerRef player) {
         if (player == null) return false;
 
@@ -72,29 +68,16 @@ public class HungerProtectionUtils {
         return false;
     }
 
+    /**
+     * Name of the player's current world, or null if unknown (not in a world yet).
+     * 1.5.30: PlayerRef has no getWorld() in 0.7.7, only getWorldUuid(). The old reflection on
+     * getWorld() always failed, so every check used the world "default".
+     */
     private static String resolveWorldName(PlayerRef player) {
-        if (!worldMethodProbed) {
-            worldMethodProbed = true;
-            try {
-                playerGetWorldMethod = player.getClass().getMethod("getWorld");
-            } catch (Exception e) {
-                // Not available — every lookup falls back to "default" (historic behavior).
-            }
-        }
-        if (playerGetWorldMethod == null) return "default";
-
-        try {
-            Object world = playerGetWorldMethod.invoke(player);
-            if (world != null) {
-                if (worldGetNameMethod == null) {
-                    worldGetNameMethod = world.getClass().getMethod("getName");
-                }
-                String name = (String) worldGetNameMethod.invoke(world);
-                if (name != null) return name;
-            }
-        } catch (Exception ignored) {
-        }
-        return "default";
+        UUID worldUuid = player.getWorldUuid();
+        if (worldUuid == null) return null;
+        World world = Universe.get().getWorld(worldUuid);
+        return world != null ? world.getName() : null;
     }
 
     private static boolean checkSafety(PlayerRef player, String worldName) {
@@ -141,9 +124,9 @@ public class HungerProtectionUtils {
 
             Vector3d pos = player.getTransform().getPosition();
             
-            // Uses the passed worldName directly
-            java.util.Set<?> regions = (java.util.Set<?>) getRegionsAtMethod.invoke(api, 
-                worldName, 
+            // Uses the player's world; unknown world -> "default" (the old behavior)
+            java.util.Set<?> regions = (java.util.Set<?>) getRegionsAtMethod.invoke(api,
+                worldName != null ? worldName : "default",
                 pos.x(),
                 pos.y(),
                 pos.z()
@@ -290,7 +273,11 @@ public class HungerProtectionUtils {
 			// Get position
             Vector3d pos = player.getTransform().getPosition();
 
-            String spawnWorldName = getSpawnWorldName(worldName);
+            String spawnWorldName = getSpawnWorldName(worldName != null ? worldName : "default");
+
+            // 1.5.30: the spawn area only protects inside the spawn's world. Before, a player in
+            // another world at the same coordinates also counted as "safe". Unknown world: as before.
+            if (worldName != null && !worldName.equals(spawnWorldName)) return false;
 
             boolean result = (boolean) isInProtectedAreaMethod.invoke(spawnProtectionManager, spawnWorldName, pos);
             return result;

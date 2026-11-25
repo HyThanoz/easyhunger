@@ -110,6 +110,8 @@ public class EasyHungerConfig {
             .append(LOW_WARNINGS_ENABLED, (c, v) -> c.lowWarningsEnabled = v, EasyHungerConfig::isLowWarningsEnabled).add()
             .append(CRITICAL_WARNING_THRESHOLD, (c, v) -> c.criticalWarningThreshold = v, EasyHungerConfig::getCriticalWarningThreshold).add()
             .append(WARNING_SOUND, (c, v) -> c.warningSound = (v == null ? "" : v), EasyHungerConfig::getWarningSound).add()
+            // 1.5.30: the field setters above skip the range checks, so check everything once decoded.
+            .afterDecode(EasyHungerConfig::sanitizeLoaded)
             .build();
 
     // === HARD-balanced defaults (v1.2.6) ===
@@ -352,6 +354,58 @@ public class EasyHungerConfig {
                     "rango.entre", "clave", key, "min", min, "max", max, "valor", value);
         }
         return value;
+    }
+
+    /**
+     * 1.5.30: values loaded from HungerConfig.json used to skip the range checks of the setters
+     * (MaxHunger 0 divided by zero in the HUD, StarvationTickRate 0 drained every tick). This runs
+     * after every decode: each invalid value goes back to its default with a WARNING in the log.
+     * It never throws, so a bad file can not stop the server from starting (trap S2).
+     * Max values first: the thresholds are checked against them.
+     */
+    private void sanitizeLoaded() {
+        EasyHungerConfig d = new EasyHungerConfig();
+        maxHunger = valido(() -> requireAtLeast("MaxHunger", maxHunger, 1), d.maxHunger);
+        maxThirst = valido(() -> requireAtLeast("MaxThirst", maxThirst, 1), d.maxThirst);
+
+        starvationTickRate = valido(() -> requireAtLeast("StarvationTickRate", starvationTickRate, 0.5f), d.starvationTickRate);
+        starvationPerTick = valido(() -> requireAtLeast("StarvationPerTick", starvationPerTick, 0f), d.starvationPerTick);
+        starvationStaminaModifier = valido(() -> requireAtLeast("StarvationStaminaModifier", starvationStaminaModifier, 0f), d.starvationStaminaModifier);
+        starvationDamage = valido(() -> requireAtLeast("StarvationDamage", starvationDamage, 0f), d.starvationDamage);
+        blockBreakHungerCost = valido(() -> requireAtLeast("BlockBreakHungerCost", blockBreakHungerCost, 0f), d.blockBreakHungerCost);
+        jumpHungerCost = valido(() -> requireAtLeast("JumpHungerCost", jumpHungerCost, 0f), d.jumpHungerCost);
+
+        thirstDecayRate = valido(() -> requireAtLeast("ThirstDecayRate", thirstDecayRate, 0f), d.thirstDecayRate);
+        sprintThirstMultiplier = valido(() -> requireAtLeast("SprintThirstMultiplier", sprintThirstMultiplier, 0f), d.sprintThirstMultiplier);
+        thirstDamage = valido(() -> requireAtLeast("ThirstDamage", thirstDamage, 0f), d.thirstDamage);
+        blockBreakThirstCost = valido(() -> requireAtLeast("BlockBreakThirstCost", blockBreakThirstCost, 0f), d.blockBreakThirstCost);
+        jumpThirstCost = valido(() -> requireAtLeast("JumpThirstCost", jumpThirstCost, 0f), d.jumpThirstCost);
+
+        // Thresholds: between 0 and the max; the fallback is the default, cut to the max if needed.
+        hungryThreshold = valido(() -> requireBetween("HungryThreshold", hungryThreshold, 0f, maxHunger),
+                Math.min(d.hungryThreshold, maxHunger));
+        thirstyThreshold = valido(() -> requireBetween("ThirstyThreshold", thirstyThreshold, 0f, maxThirst),
+                Math.min(d.thirstyThreshold, maxThirst));
+        float maxWellFed = Math.max(maxHunger, maxThirst);
+        wellFedThreshold = valido(() -> requireBetween("WellFedThreshold", wellFedThreshold, 0f, maxWellFed),
+                Math.min(d.wellFedThreshold, maxWellFed));
+        criticalWarningThreshold = valido(() -> requireAtLeast("CriticalWarningThreshold", criticalWarningThreshold, 0f), d.criticalWarningThreshold);
+
+        idlePauseSeconds = valido(() -> requireAtLeast("IdlePauseSeconds", idlePauseSeconds, 0f), d.idlePauseSeconds);
+        hudInitDelayMs = valido(() -> requireAtLeast("HudInitDelayMs", hudInitDelayMs, 0), d.hudInitDelayMs);
+        hudAutoRecoverIntervalMs = valido(() -> requireAtLeast("HudAutoRecoverIntervalMs", hudAutoRecoverIntervalMs, 1000), d.hudAutoRecoverIntervalMs);
+    }
+
+    /** The checked value, or the fallback (with a WARNING) if the check rejects it or it is null. */
+    private static <T> T valido(java.util.function.Supplier<T> comprobar, T porDefecto) {
+        try {
+            return comprobar.get();
+        } catch (IllegalArgumentException | NullPointerException e) {
+            String motivo = e instanceof NullPointerException ? "valor vacío (null)" : e.getMessage();
+            com.haas.easyhunger.EasyHunger.LOGGER.at(java.util.logging.Level.WARNING)
+                    .log("HungerConfig.json: " + motivo + " -> se usa " + porDefecto);
+            return porDefecto;
+        }
     }
 
     /**
