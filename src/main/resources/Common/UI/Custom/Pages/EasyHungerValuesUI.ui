@@ -179,7 +179,7 @@ $C.@PageOverlay {
         LayoutMode: Left;
 
         Label #FilterLabel {
-          Text: "FILTER:";
+          Text: "FILTER";
           Style: @MetaMuted;
           Anchor: (Right: 8, Vertical: 0);
         }
@@ -281,7 +281,7 @@ $C.@PageOverlay {
         LayoutMode: Left;
 
         Label #SearchLabel {
-          Text: "Search:";
+          Text: "Search";
           Style: @MetaMuted;
           Anchor: (Width: 55, Vertical: 0);
         }
@@ -302,7 +302,7 @@ $C.@PageOverlay {
 
       // Total count label
       Label #TotalLabel {
-        Text: "Total: 0 items";
+        Text: "0 items";
         Style: @MetaMuted;
         Anchor: (Height: 18, Bottom: 4);
       }
