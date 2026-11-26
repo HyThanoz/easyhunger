@@ -3,6 +3,8 @@
   "ayuda.hide": "<v>/eh hide</v><m> - </m>Hide the bars",
   "ayuda.show": "<v>/eh show</v><m> - </m>Show the bars",
   "ayuda.avisos": "<v>/eh avisos</v><m> - </m>Turn hunger and thirst warnings on or off",
+  "ayuda.link": "<v>/eh link</v><m> - </m>Source code of this mod (AGPL-3.0)",
+  "link.codigo": "Source code of EasyHunger (AGPL-3.0): ",
   "aviso.hambre": "You're hungry",
   "aviso.hambre_cuerpo": "Eat something soon.",
   "aviso.hambre_critico": "You're starving to death",
